@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Toalettbesök</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #1a73e8; --blue-dk: #1557b0;
+      --green: #34a853; --green-bg: #f0faf4;
+      --red: #ea4335;   --red-bg: #fff3f0;
+      --yellow: #f9ab00; --yellow-bg: #fffde7;
+      --grey: #f1f3f4; --border: #dadce0;
+      --text: #202124; --muted: #5f6368;
+    }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; color: var(--text); min-height: 100vh; }
+
+    #setup { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .card { background: #fff; border-radius: 20px; padding: 44px 40px 40px; width: 100%; max-width: 460px; box-shadow: 0 4px 24px rgba(0,0,0,.10); }
+    .logo { text-align: center; margin-bottom: 36px; }
+    .logo .icon { font-size: 56px; line-height: 1; display: block; }
+    .logo h1 { font-size: 26px; font-weight: 700; color: var(--blue); margin-top: 10px; letter-spacing: -.3px; }
+    .form-group { margin-bottom: 18px; }
+    label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
+    select, input[type="text"], input[type="date"] { width: 100%; padding: 12px 14px; border: 2px solid var(--border); border-radius: 10px; font-size: 15px; outline: none; transition: border-color .2s; background: #fff; }
+    select:focus, input:focus { border-color: var(--blue); }
+    .btn-primary { display: block; width: 100%; padding: 14px; background: var(--blue); color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 24px; transition: background .2s, transform .1s; }
+    .btn-primary:hover { background: var(--blue-dk); }
+    .btn-primary:active { transform: scale(.98); }
+
+    #app { display: none; }
+    .header { background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%); color: #fff; padding: 16px 24px 14px; box-shadow: 0 2px 12px rgba(0,0,0,.20); }
+    .header-row { display: flex; align-items: center; justify-content: space-between; }
+    .header-title { font-size: 21px; font-weight: 700; letter-spacing: -.2px; }
+    #clock { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; opacity: .85; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .chip { background: rgba(255,255,255,.20); padding: 3px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; }
+
+    #active-panel { padding: 16px 24px; border-bottom: 1px solid var(--border); background: #fff; }
+    .panel-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .panel-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+    .count-pill { background: var(--red); color: #fff; font-size: 12px; font-weight: 700; min-width: 22px; height: 22px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; padding: 0 6px; transition: background .3s; }
+    .count-pill.zero { background: var(--border); color: var(--muted); }
+    .no-one-out { color: var(--muted); font-size: 14px; padding: 4px 0; }
+    .active-cards { display: flex; flex-wrap: wrap; gap: 10px; }
+    .active-card { display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-radius: 14px; border: 2px solid var(--border); background: var(--grey); min-width: 160px; cursor: pointer; transition: transform .15s, box-shadow .15s; }
+    .active-card:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,.12); }
+    .active-card.warn  { background: var(--yellow-bg); border-color: var(--yellow); }
+    .active-card.alert { background: var(--red-bg); border-color: var(--red); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(234,67,53,.4); } 50% { box-shadow: 0 0 0 6px rgba(234,67,53,0); } }
+    .ac-name { font-size: 15px; font-weight: 700; color: var(--text); }
+    .active-card.alert .ac-name { color: var(--red); }
+    .active-card.warn  .ac-name { color: #c47d00; }
+    .ac-timer { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.5px; color: var(--text); }
+    .active-card.alert .ac-timer { color: var(--red); }
+    .active-card.warn  .ac-timer { color: var(--yellow); }
+    .ac-since { font-size: 11px; color: var(--muted); }
+    .ac-return-btn { margin-top: 8px; padding: 5px 0; background: rgba(255,255,255,.7); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background .15s; }
+    .ac-return-btn:hover { background: rgba(255,255,255,1); }
+
+    .toolbar { background: #fff; padding: 10px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .stats { font-size: 13px; color: var(--muted); }
+    .stats strong { color: var(--text); }
+    .btn-ghost { padding: 6px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; cursor: pointer; color: var(--muted); background: transparent; transition: background .15s; }
+    .btn-ghost:hover { background: var(--grey); color: var(--text); }
+
+    #students-section { padding: 16px 24px 40px; }
+    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 12px; }
+    .legend { display: flex; gap: 16px; margin-bottom: 14px; font-size: 12px; color: var(--muted); }
+    .leg { display: flex; align-items: center; gap: 5px; }
+    .leg-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .students-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+    .s-btn { position: relative; padding: 13px 13px 11px; border-radius: 12px; border: 2px solid var(--border); background: #fff; cursor: pointer; text-align: left; transition: transform .15s, box-shadow .15s; box-shadow: 0 1px 3px rgba(0,0,0,.07); }
+    .s-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(0,0,0,.11); }
+    .s-btn:active { transform: scale(.97); }
+    .s-btn.out      { background: var(--red-bg);   border-color: var(--red); }
+    .s-btn.returned { background: var(--green-bg); border-color: var(--green); }
+    .s-dot { position: absolute; top: 10px; right: 11px; width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+    .s-btn.out      .s-dot { background: var(--red); }
+    .s-btn.returned .s-dot { background: var(--green); }
+    .s-name { font-size: 14px; font-weight: 700; padding-right: 18px; margin-bottom: 3px; color: var(--text); }
+    .s-btn.out      .s-name { color: var(--red); }
+    .s-btn.returned .s-name { color: var(--green); }
+    .s-status { font-size: 11px; color: var(--muted); line-height: 1.4; }
+    .s-btn.out      .s-status { color: #b71c1c; }
+    .s-btn.returned .s-status { color: #1b5e20; }
+    .visit-badge { display: inline-block; background: var(--blue); color: #fff; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px; text-align: center; line-height: 16px; padding: 0 4px; margin-left: 4px; vertical-align: middle; }
+
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200; align-items: center; justify-content: center; }
+    .overlay.open { display: flex; }
+    .modal { background: #fff; border-radius: 18px; padding: 30px 28px 24px; max-width: 340px; width: 92%; text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,.20); }
+    .modal .m-icon { font-size: 38px; margin-bottom: 8px; }
+    .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .modal p  { font-size: 14px; color: var(--muted); margin-bottom: 22px; line-height: 1.5; }
+    .modal-btns { display: flex; gap: 10px; }
+    .modal-btns button { flex: 1; padding: 12px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 700; border: none; transition: opacity .15s; }
+    .modal-btns button:hover { opacity: .85; }
+    .btn-ok     { background: var(--blue); color: #fff; }
+    .btn-cancel { background: var(--grey); color: var(--text); }
+
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(70px); background: #323232; color: #fff; padding: 10px 22px; border-radius: 10px; font-size: 14px; font-weight: 500; opacity: 0; transition: transform .28s, opacity .28s; z-index: 300; pointer-events: none; white-space: nowrap; }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  </style>
+</head>
+<body>
+
+<div id="setup">
+  <div class="card">
+    <div class="logo">
+      <span class="icon">🚻</span>
+      <h1>Toalettbesök</h1>
+    </div>
+    <div class="form-group">
+      <label>Klass</label>
+      <select id="cls"></select>
+    </div>
+    <div class="form-group">
+      <label>Provets namn</label>
+      <input type="text" id="test-name" placeholder="t.ex. Nationella provet svenska">
+    </div>
+    <div class="form-group">
+      <label>Datum</label>
+      <input type="date" id="session-date">
+    </div>
+    <button class="btn-primary" onclick="startSession()">Starta session →</button>
+  </div>
+</div>
+
+<div id="app">
+  <div class="header">
+    <div class="header-row">
+      <div class="header-title">🚻 Toalettbesök</div>
+      <div id="clock"></div>
+    </div>
+    <div class="chips">
+      <span class="chip" id="h-class"></span>
+      <span class="chip" id="h-test"></span>
+      <span class="chip" id="h-date"></span>
+    </div>
+  </div>
+
+  <div id="active-panel">
+    <div class="panel-header">
+      <div class="panel-title">Ute just nu</div>
+      <div class="count-pill zero" id="out-pill">0</div>
+    </div>
+    <div id="active-cards" class="active-cards">
+      <div class="no-one-out">Ingen elev är ute just nu.</div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="stats" id="stats">Laddar…</div>
+    <button class="btn-ghost" onclick="confirmClear()">Rensa session</button>
+  </div>
+
+  <div id="students-section">
+    <div class="section-title">Alla elever</div>
+    <div class="legend">
+      <div class="leg"><div class="leg-dot" style="background:var(--border)"></div>Ej lämnat</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--red)"></div>Ute nu</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>Tillbaka</div>
+    </div>
+    <div class="students-grid" id="grid"></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="m-icon" id="m-icon"></div>
+    <h2 id="m-title"></h2>
+    <p  id="m-body"></p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Avbryt</button>
+      <button class="btn-ok" id="m-ok">Bekräfta</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const WARN_MS  = 5  * 60 * 1000;
+  const ALERT_MS = 10 * 60 * 1000;
+
+  let students = [], cls = '', testName = '', dateStr = '';
+
+  window.onload = () => {
+    document.getElementById('session-date').value = new Date().toISOString().split('T')[0];
+    google.script.run
+      .withSuccessHandler(list => {
+        const sel = document.getElementById('cls');
+        sel.innerHTML = list.length
+          ? list.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')
+          : '<option value="">Inga flikar hittades</option>';
+      })
+      .getClasses();
+  };
+
+  function startSession() {
+    cls      = document.getElementById('cls').value;
+    testName = document.getElementById('test-name').value.trim();
+    const dv = document.getElementById('session-date').value;
+    if (!cls || !testName || !dv) { toast('Fyll i klass, provets namn och datum.'); return; }
+    const [y, m, d] = dv.split('-');
+    const months = ['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'];
+    dateStr = `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+    document.getElementById('h-class').textContent = cls;
+    document.getElementById('h-test').textContent  = testName;
+    document.getElementById('h-date').textContent  = dateStr;
+    document.getElementById('setup').style.display = 'none';
+    document.getElementById('app').style.display   = 'block';
+    fetchStudents();
+    startClock();
+    setInterval(fetchStudents, 20000);
+    setInterval(tick, 1000);
+  }
+
+  function startClock() {
+    const update = () => {
+      document.getElementById('clock').textContent =
+        new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+    };
+    update(); setInterval(update, 1000);
+  }
+
+  function fetchStudents() {
+    google.script.run
+      .withSuccessHandler(res => { students = res.students; render(); })
+      .withFailureHandler(e => toast('Fel: ' + e.message))
+      .getStudents(cls);
+  }
+
+  function render() { renderActive(); renderGrid(); renderStats(); }
+
+  function tick() {
+    document.querySelectorAll('[data-epoch]').forEach(el => {
+      const elapsed = Date.now() - parseInt(el.dataset.epoch);
+      el.textContent = fmtTimer(elapsed);
+      const card = el.closest('.active-card');
+      if (card) {
+        card.classList.toggle('warn',  elapsed >= WARN_MS  && elapsed < ALERT_MS);
+        card.classList.toggle('alert', elapsed >= ALERT_MS);
+      }
+    });
+  }
+
+  function renderActive() {
+    const out  = students.filter(s => s.left && !s.returned);
+    const pill = document.getElementById('out-pill');
+    pill.textContent = out.length;
+    pill.classList.toggle('zero', out.length === 0);
+    const container = document.getElementById('active-cards');
+    if (!out.length) {
+      container.innerHTML = '<div class="no-one-out">Ingen elev är ute just nu.</div>';
+      return;
+    }
+    container.innerHTML = out.map(s => {
+      const elapsed = s.leftEpoch ? Date.now() - s.leftEpoch : 0;
+      const c = elapsed >= ALERT_MS ? 'alert' : elapsed >= WARN_MS ? 'warn' : '';
+      return `
+        <div class="active-card ${c}" onclick="handleReturn(${JSON.stringify(s.name)})">
+          <div class="ac-name">${esc(s.name)}</div>
+          <div class="ac-timer" data-epoch="${s.leftEpoch}">${fmtTimer(elapsed)}</div>
+          <div class="ac-since">Gick kl. ${esc(s.left)}</div>
+          <button class="ac-return-btn" onclick="event.stopPropagation();handleReturn(${JSON.stringify(s.name)})">
+            ✓ Markera tillbaka
+          </button>
+        </div>`;
+    }).join('');
+  }
+
+  function renderGrid() {
+    document.getElementById('grid').innerHTML = students.map((s, i) => {
+      let state = '', statusHtml = 'Klicka för att gå';
+      if (s.returned) {
+        state = 'returned';
+        statusHtml = `Gick ${esc(s.left)} · Tillbaka ${esc(s.returned)}`;
+      } else if (s.left) {
+        state = 'out';
+        statusHtml = `Ute sedan kl. ${esc(s.left)}`;
+      }
+      const badge = s.visits > 0 ? `<span class="visit-badge">${s.visits}</span>` : '';
+      return `
+        <button class="s-btn ${state}" onclick="handleClick(${i})">
+          <div class="s-dot"></div>
+          <div class="s-name">${esc(s.name)}${badge}</div>
+          <div class="s-status">${statusHtml}</div>
+        </button>`;
+    }).join('');
+  }
+
+  function renderStats() {
+    const total = students.reduce((n, s) => n + (s.visits || 0), 0);
+    const out   = students.filter(s => s.left && !s.returned).length;
+    document.getElementById('stats').innerHTML =
+      `<strong>${out}</strong> ute · <strong>${total}</strong> besök totalt idag`;
+  }
+
+  function handleClick(idx) {
+    const s = students[idx];
+    if (!s.left) {
+      modal('🚶', `${s.name} lämnar`, `Registrera att ${s.name} går på toaletten nu?`, () => {
+        closeModal();
+        google.script.run
+          .withSuccessHandler(r => { if (r.success) { toast(`${s.name} – gick ${r.time}`); fetchStudents(); } })
+          .logLeave(cls, s.name, testName);
+      });
+    } else if (!s.returned) {
+      handleReturn(s.name);
+    } else {
+      modal('↩️', `Återställ ${s.name}`, `Ta bort registreringen för ${s.name}?`, () => {
+        closeModal();
+        google.script.run
+          .withSuccessHandler(r => { if (r.success) { toast(`${s.name} återställd`); fetchStudents(); } })
+          .resetStudent(cls, s.name);
+      });
+    }
+  }
+
+  function handleReturn(name) {
+    const s = students.find(x => x.name === name);
+    if (!s) return;
+    modal('🏃', `${s.name} är tillbaka`, `Registrera att ${s.name} kommit tillbaka? (Gick ${s.left})`, () => {
+      closeModal();
+      google.script.run
+        .withSuccessHandler(r => { if (r.success) { toast(`${s.name} – tillbaka ${r.time}`); fetchStudents(); } })
+        .logReturn(cls, s.name, testName);
+    });
+  }
+
+  function confirmClear() {
+    modal('🗑️', 'Rensa session', 'Vill du rensa alla tider för den här sessionen?', () => {
+      closeModal();
+      google.script.run
+        .withSuccessHandler(() => { toast('Sessionen rensad'); fetchStudents(); })
+        .clearSession(cls);
+    });
+  }
+
+  function modal(icon, title, body, onOk) {
+    document.getElementById('m-icon').textContent  = icon;
+    document.getElementById('m-title').textContent = title;
+    document.getElementById('m-body').textContent  = body;
+    document.getElementById('m-ok').onclick        = onOk;
+    document.getElementById('overlay').classList.add('open');
+  }
+
+  function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+
+  document.getElementById('overlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+  });
+
+  let toastT;
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(() => el.classList.remove('show'), 2800);
+  }
+
+  function fmtTimer(ms) {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    const m = Math.floor(s / 60);
+    return `${String(m).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
