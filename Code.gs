@@ -1,11 +1,25 @@
-const LOG_SHEET = 'Logg';
-const COL_NAME  = 1;
-const COL_LEFT  = 2;
-const COL_RET   = 3;
-const COL_EPOCH = 4;
+const LOG_SHEET  = 'Logg';
+const COL_NAME   = 1;
+const COL_LEFT   = 2;
+const COL_RET    = 3;
+const COL_EPOCH  = 4;
+const QUEUE_PFX  = 'q_';
+const MAXOUT_PFX = 'm_';
+const DEFAULT_MAX = 2;
 
-function doGet() {
-  return HtmlService.createHtmlOutputFromFile('Index')
+function doGet(e) {
+  const view = e && e.parameter && e.parameter.view;
+  if (view === 'elev') {
+    const tmpl = HtmlService.createTemplateFromFile('Elev');
+    tmpl.presetKlass = (e.parameter.klass) || '';
+    return tmpl.evaluate()
+      .setTitle('Toalettbesök – Elev')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+  const tmpl = HtmlService.createTemplateFromFile('Index');
+  try { tmpl.webAppUrl = ScriptApp.getService().getUrl(); }
+  catch (_) { tmpl.webAppUrl = ''; }
+  return tmpl.evaluate()
     .setTitle('Toalettbesök')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
@@ -76,8 +90,83 @@ function clearSession(className) {
   const sheet   = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(className);
   const lastRow = sheet.getLastRow();
   if (lastRow >= 2) sheet.getRange(2, COL_LEFT, lastRow - 1, 3).clearContent();
+  _saveQueue(className, []);
   return { success: true };
 }
+
+// ── Kö & inställningar ────────────────────────────
+
+function getMaxOut(className) {
+  const v = PropertiesService.getScriptProperties().getProperty(MAXOUT_PFX + className);
+  return v ? parseInt(v) : DEFAULT_MAX;
+}
+
+function setMaxOut(className, max) {
+  PropertiesService.getScriptProperties()
+    .setProperty(MAXOUT_PFX + className, String(parseInt(max)));
+  return { success: true };
+}
+
+function _getQueue(className) {
+  const raw = PropertiesService.getScriptProperties().getProperty(QUEUE_PFX + className);
+  return raw ? JSON.parse(raw) : [];
+}
+
+function _saveQueue(className, queue) {
+  PropertiesService.getScriptProperties()
+    .setProperty(QUEUE_PFX + className, JSON.stringify(queue));
+}
+
+function getPendingRequests(className) {
+  return { queue: _getQueue(className), maxOut: getMaxOut(className) };
+}
+
+function submitRequest(className, studentName) {
+  const queue   = _getQueue(className);
+  const existing = queue.find(r => r.name === studentName);
+  if (existing && existing.status === 'waiting') return { success: false, reason: 'already_queued' };
+  const data     = getStudents(className);
+  const student  = data.students.find(s => s.name === studentName);
+  if (student && student.left && !student.returned) return { success: false, reason: 'already_out' };
+  const outCount = data.students.filter(s => s.left && !s.returned).length;
+  if (outCount >= getMaxOut(className)) return { success: false, reason: 'max_reached' };
+  const clean = queue.filter(r => r.name !== studentName);
+  clean.push({ name: studentName, time: Date.now(), status: 'waiting' });
+  _saveQueue(className, clean);
+  return { success: true };
+}
+
+function approveRequest(className, studentName, testName) {
+  const data     = getStudents(className);
+  const outCount = data.students.filter(s => s.left && !s.returned).length;
+  if (outCount >= getMaxOut(className)) return { success: false, reason: 'max_reached' };
+  _saveQueue(className, _getQueue(className).filter(r => r.name !== studentName));
+  return logLeave(className, studentName, testName);
+}
+
+function denyRequest(className, studentName) {
+  const queue = _getQueue(className);
+  const idx   = queue.findIndex(r => r.name === studentName);
+  if (idx >= 0) queue[idx].status = 'denied';
+  _saveQueue(className, queue);
+  return { success: true };
+}
+
+function cancelRequest(className, studentName) {
+  _saveQueue(className, _getQueue(className).filter(r => r.name !== studentName));
+  return { success: true };
+}
+
+function getStudentStatus(className, studentName) {
+  const queue    = _getQueue(className);
+  const entry    = queue.find(r => r.name === studentName) || null;
+  const data     = getStudents(className);
+  const student  = data.students.find(s => s.name === studentName) || null;
+  const outCount = data.students.filter(s => s.left && !s.returned).length;
+  return { entry, student, maxOut: getMaxOut(className), outCount, serverTime: data.serverTime };
+}
+
+// ── Privata hjälpfunktioner ───────────────────────
 
 function _findRow(sheet, name) {
   const lastRow = sheet.getLastRow();

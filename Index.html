@@ -11,13 +11,15 @@
       --green: #34a853; --green-bg: #f0faf4;
       --red: #ea4335;   --red-bg: #fff3f0;
       --yellow: #f9ab00; --yellow-bg: #fffde7;
+      --purple: #9334e6; --purple-bg: #f3e8fd;
       --grey: #f1f3f4; --border: #dadce0;
       --text: #202124; --muted: #5f6368;
     }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; color: var(--text); min-height: 100vh; }
 
+    /* ── Setup ── */
     #setup { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
-    .card { background: #fff; border-radius: 20px; padding: 44px 40px 40px; width: 100%; max-width: 460px; box-shadow: 0 4px 24px rgba(0,0,0,.10); }
+    .card { background: #fff; border-radius: 20px; padding: 44px 40px 40px; width: 100%; max-width: 480px; box-shadow: 0 4px 24px rgba(0,0,0,.10); }
     .logo { text-align: center; margin-bottom: 36px; }
     .logo .icon { font-size: 56px; line-height: 1; display: block; }
     .logo h1 { font-size: 26px; font-weight: 700; color: var(--blue); margin-top: 10px; letter-spacing: -.3px; }
@@ -29,45 +31,91 @@
     .btn-primary:hover { background: var(--blue-dk); }
     .btn-primary:active { transform: scale(.98); }
 
+    .mode-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mode-opt { position: relative; }
+    .mode-opt input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .mode-opt span {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 14px 10px; border: 2px solid var(--border); border-radius: 12px;
+      cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted);
+      text-align: center; line-height: 1.4; transition: border-color .2s, color .2s, background .2s;
+    }
+    .mode-opt span em { font-style: normal; font-size: 22px; display: block; margin-bottom: 4px; }
+    .mode-opt input:checked + span { border-color: var(--blue); color: var(--blue); background: #e8f0fe; }
+
+    .maxout-row { display: flex; gap: 8px; }
+    .maxout-row button { flex: 1; padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-size: 16px; font-weight: 700; background: #fff; color: var(--muted); cursor: pointer; transition: all .15s; }
+    .maxout-row button.sel { border-color: var(--blue); background: #e8f0fe; color: var(--blue); }
+
+    /* ── App layout ── */
     #app { display: none; }
     .header { background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%); color: #fff; padding: 16px 24px 14px; box-shadow: 0 2px 12px rgba(0,0,0,.20); }
     .header-row { display: flex; align-items: center; justify-content: space-between; }
     .header-title { font-size: 21px; font-weight: 700; letter-spacing: -.2px; }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
     #clock { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; opacity: .85; }
+    .btn-qr { background: rgba(255,255,255,.22); border: 1px solid rgba(255,255,255,.4); color: #fff; padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s; }
+    .btn-qr:hover { background: rgba(255,255,255,.32); }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
     .chip { background: rgba(255,255,255,.20); padding: 3px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; }
+    .chip.mode-chip { background: rgba(255,255,255,.35); }
 
-    #active-panel { padding: 16px 24px; border-bottom: 1px solid var(--border); background: #fff; }
+    /* ── Queue panel ── */
+    #queue-panel { padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--purple-bg); display: none; }
     .panel-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
     .panel-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
     .count-pill { background: var(--red); color: #fff; font-size: 12px; font-weight: 700; min-width: 22px; height: 22px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; padding: 0 6px; transition: background .3s; }
     .count-pill.zero { background: var(--border); color: var(--muted); }
+    .count-pill.purple { background: var(--purple); }
     .no-one-out { color: var(--muted); font-size: 14px; padding: 4px 0; }
+
+    .req-cards { display: flex; flex-wrap: wrap; gap: 10px; }
+    .req-card { background: #fff; border: 2px solid var(--purple); border-radius: 14px; padding: 12px 14px; min-width: 160px; animation: slideIn .2s ease; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+    .req-name { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+    .req-time { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+    .req-btns { display: flex; gap: 6px; }
+    .btn-approve { flex: 1; padding: 7px; background: var(--green); color: #fff; border: none; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; transition: opacity .15s; }
+    .btn-approve:hover { opacity: .85; }
+    .btn-approve:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; opacity: 1; }
+    .btn-deny { flex: 1; padding: 7px; background: var(--grey); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; transition: background .15s; }
+    .btn-deny:hover { background: #e0e0e0; }
+    .max-warning { font-size: 12px; color: #c47d00; font-weight: 600; margin-top: 8px; }
+
+    /* ── Active panel ── */
+    #active-panel { padding: 16px 24px; border-bottom: 1px solid var(--border); background: #fff; }
     .active-cards { display: flex; flex-wrap: wrap; gap: 10px; }
     .active-card { display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-radius: 14px; border: 2px solid var(--border); background: var(--grey); min-width: 160px; cursor: pointer; transition: transform .15s, box-shadow .15s; }
     .active-card:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,.12); }
     .active-card.warn  { background: var(--yellow-bg); border-color: var(--yellow); }
     .active-card.alert { background: var(--red-bg); border-color: var(--red); animation: pulse 2s infinite; }
     @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(234,67,53,.4); } 50% { box-shadow: 0 0 0 6px rgba(234,67,53,0); } }
-    .ac-name { font-size: 15px; font-weight: 700; color: var(--text); }
+    .ac-name { font-size: 15px; font-weight: 700; }
     .active-card.alert .ac-name { color: var(--red); }
     .active-card.warn  .ac-name { color: #c47d00; }
-    .ac-timer { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.5px; color: var(--text); }
+    .ac-timer { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
     .active-card.alert .ac-timer { color: var(--red); }
     .active-card.warn  .ac-timer { color: var(--yellow); }
     .ac-since { font-size: 11px; color: var(--muted); }
     .ac-return-btn { margin-top: 8px; padding: 5px 0; background: rgba(255,255,255,.7); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background .15s; }
-    .ac-return-btn:hover { background: rgba(255,255,255,1); }
+    .ac-return-btn:hover { background: #fff; }
 
-    .toolbar { background: #fff; padding: 10px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    /* ── Toolbar ── */
+    .toolbar { background: #fff; padding: 10px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
     .stats { font-size: 13px; color: var(--muted); }
     .stats strong { color: var(--text); }
-    .btn-ghost { padding: 6px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; cursor: pointer; color: var(--muted); background: transparent; transition: background .15s; }
+    .toolbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .max-label { font-size: 12px; color: var(--muted); font-weight: 600; }
+    .max-btns { display: flex; gap: 4px; }
+    .max-btns button { width: 28px; height: 28px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; background: #fff; color: var(--muted); transition: all .15s; }
+    .max-btns button.sel { border-color: var(--blue); background: #e8f0fe; color: var(--blue); }
+    .btn-ghost { padding: 6px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; cursor: pointer; color: var(--muted); background: transparent; transition: background .15s; white-space: nowrap; }
     .btn-ghost:hover { background: var(--grey); color: var(--text); }
 
+    /* ── Students grid ── */
     #students-section { padding: 16px 24px 40px; }
     .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 12px; }
-    .legend { display: flex; gap: 16px; margin-bottom: 14px; font-size: 12px; color: var(--muted); }
+    .legend { display: flex; gap: 16px; margin-bottom: 14px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
     .leg { display: flex; align-items: center; gap: 5px; }
     .leg-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
     .students-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
@@ -76,17 +124,20 @@
     .s-btn:active { transform: scale(.97); }
     .s-btn.out      { background: var(--red-bg);   border-color: var(--red); }
     .s-btn.returned { background: var(--green-bg); border-color: var(--green); }
+    .s-btn.maxed    { opacity: .55; cursor: not-allowed; }
     .s-dot { position: absolute; top: 10px; right: 11px; width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
     .s-btn.out      .s-dot { background: var(--red); }
     .s-btn.returned .s-dot { background: var(--green); }
-    .s-name { font-size: 14px; font-weight: 700; padding-right: 18px; margin-bottom: 3px; color: var(--text); }
+    .s-name { font-size: 14px; font-weight: 700; padding-right: 18px; margin-bottom: 3px; }
     .s-btn.out      .s-name { color: var(--red); }
     .s-btn.returned .s-name { color: var(--green); }
     .s-status { font-size: 11px; color: var(--muted); line-height: 1.4; }
     .s-btn.out      .s-status { color: #b71c1c; }
     .s-btn.returned .s-status { color: #1b5e20; }
     .visit-badge { display: inline-block; background: var(--blue); color: #fff; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px; text-align: center; line-height: 16px; padding: 0 4px; margin-left: 4px; vertical-align: middle; }
+    .max-banner { background: var(--yellow-bg); border: 1px solid var(--yellow); border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 600; color: #7c5c00; margin-bottom: 12px; display: none; }
 
+    /* ── Modals & overlays ── */
     .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200; align-items: center; justify-content: center; }
     .overlay.open { display: flex; }
     .modal { background: #fff; border-radius: 18px; padding: 30px 28px 24px; max-width: 340px; width: 92%; text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,.20); }
@@ -99,12 +150,17 @@
     .btn-ok     { background: var(--blue); color: #fff; }
     .btn-cancel { background: var(--grey); color: var(--text); }
 
+    #qr-modal .modal { max-width: 320px; }
+    .qr-url { font-size: 11px; word-break: break-all; color: var(--muted); margin: 10px 0 16px; background: var(--grey); padding: 8px 10px; border-radius: 8px; text-align: left; }
+    #qr-img { width: 200px; height: 200px; border-radius: 8px; margin: 0 auto 12px; display: block; }
+
     .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(70px); background: #323232; color: #fff; padding: 10px 22px; border-radius: 10px; font-size: 14px; font-weight: 500; opacity: 0; transition: transform .28s, opacity .28s; z-index: 300; pointer-events: none; white-space: nowrap; }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
   </style>
 </head>
 <body>
 
+<!-- ── Setup ── -->
 <div id="setup">
   <div class="card">
     <div class="logo">
@@ -123,23 +179,63 @@
       <label>Datum</label>
       <input type="date" id="session-date">
     </div>
+    <div class="form-group">
+      <label>Max elever ute samtidigt</label>
+      <div class="maxout-row" id="maxout-setup">
+        <button type="button" onclick="selectMax(1)">1</button>
+        <button type="button" onclick="selectMax(2)" class="sel">2</button>
+        <button type="button" onclick="selectMax(3)">3</button>
+        <button type="button" onclick="selectMax(4)">4</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Registreringsläge</label>
+      <div class="mode-opts">
+        <label class="mode-opt">
+          <input type="radio" name="mode" value="direct" checked>
+          <span><em>👆</em>Direkt<br><small style="font-weight:400;font-size:11px">Läraren klickar</small></span>
+        </label>
+        <label class="mode-opt">
+          <input type="radio" name="mode" value="request">
+          <span><em>📲</em>Elevansökan<br><small style="font-weight:400;font-size:11px">Elever ansöker</small></span>
+        </label>
+      </div>
+    </div>
     <button class="btn-primary" onclick="startSession()">Starta session →</button>
   </div>
 </div>
 
+<!-- ── App ── -->
 <div id="app">
   <div class="header">
     <div class="header-row">
       <div class="header-title">🚻 Toalettbesök</div>
-      <div id="clock"></div>
+      <div class="header-actions">
+        <div id="clock"></div>
+        <button class="btn-qr" id="btn-qr" style="display:none" onclick="showQR()">QR-kod</button>
+      </div>
     </div>
     <div class="chips">
       <span class="chip" id="h-class"></span>
       <span class="chip" id="h-test"></span>
       <span class="chip" id="h-date"></span>
+      <span class="chip mode-chip" id="h-mode"></span>
+      <span class="chip" id="h-max"></span>
     </div>
   </div>
 
+  <!-- Queue panel (only in request mode) -->
+  <div id="queue-panel">
+    <div class="panel-header">
+      <div class="panel-title">Ansökningar</div>
+      <div class="count-pill zero purple" id="q-pill">0</div>
+    </div>
+    <div id="queue-cards" class="req-cards">
+      <div class="no-one-out">Inga ansökningar just nu.</div>
+    </div>
+  </div>
+
+  <!-- Active panel -->
   <div id="active-panel">
     <div class="panel-header">
       <div class="panel-title">Ute just nu</div>
@@ -152,7 +248,11 @@
 
   <div class="toolbar">
     <div class="stats" id="stats">Laddar…</div>
-    <button class="btn-ghost" onclick="confirmClear()">Rensa session</button>
+    <div class="toolbar-right">
+      <span class="max-label">Max ute:</span>
+      <div class="max-btns" id="max-btns"></div>
+      <button class="btn-ghost" onclick="confirmClear()">Rensa session</button>
+    </div>
   </div>
 
   <div id="students-section">
@@ -162,10 +262,12 @@
       <div class="leg"><div class="leg-dot" style="background:var(--red)"></div>Ute nu</div>
       <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>Tillbaka</div>
     </div>
+    <div class="max-banner" id="max-banner">⚠️ Max antal elever är ute — vänta tills någon är tillbaka.</div>
     <div class="students-grid" id="grid"></div>
   </div>
 </div>
 
+<!-- Confirm modal -->
 <div class="overlay" id="overlay">
   <div class="modal">
     <div class="m-icon" id="m-icon"></div>
@@ -178,13 +280,28 @@
   </div>
 </div>
 
+<!-- QR modal -->
+<div class="overlay" id="qr-modal">
+  <div class="modal">
+    <h2 style="margin-bottom:6px">📱 Elev-QR-kod</h2>
+    <p style="margin-bottom:8px">Eleverna skannar för att ansöka om toalettbesök</p>
+    <img id="qr-img" src="" alt="QR-kod">
+    <div class="qr-url" id="qr-url"></div>
+    <button class="btn-ok" style="width:100%;padding:12px;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700" onclick="closeQR()">Stäng</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-  const WARN_MS  = 5  * 60 * 1000;
-  const ALERT_MS = 10 * 60 * 1000;
+  const WARN_MS   = 5  * 60 * 1000;
+  const ALERT_MS  = 10 * 60 * 1000;
+  const WEB_APP_URL = '<?= webAppUrl ?>';
 
   let students = [], cls = '', testName = '', dateStr = '';
+  let mode = 'direct', maxOut = 2, setupMaxOut = 2;
+
+  // ── Setup ──────────────────────────────────────
 
   window.onload = () => {
     document.getElementById('session-date').value = new Date().toISOString().split('T')[0];
@@ -198,24 +315,49 @@
       .getClasses();
   };
 
+  function selectMax(n) {
+    setupMaxOut = n;
+    document.querySelectorAll('#maxout-setup button').forEach((b, i) => {
+      b.classList.toggle('sel', i + 1 === n);
+    });
+  }
+
   function startSession() {
     cls      = document.getElementById('cls').value;
     testName = document.getElementById('test-name').value.trim();
     const dv = document.getElementById('session-date').value;
+    mode     = document.querySelector('input[name="mode"]:checked').value;
     if (!cls || !testName || !dv) { toast('Fyll i klass, provets namn och datum.'); return; }
     const [y, m, d] = dv.split('-');
     const months = ['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'];
     dateStr = `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+    maxOut  = setupMaxOut;
+
+    google.script.run.setMaxOut(cls, maxOut);
+
     document.getElementById('h-class').textContent = cls;
     document.getElementById('h-test').textContent  = testName;
     document.getElementById('h-date').textContent  = dateStr;
+    document.getElementById('h-mode').textContent  = mode === 'direct' ? '👆 Direkt' : '📲 Elevansökan';
+    document.getElementById('h-max').textContent   = `Max ${maxOut} ute`;
+
+    if (mode === 'request') {
+      document.getElementById('queue-panel').style.display = 'block';
+      if (WEB_APP_URL) document.getElementById('btn-qr').style.display = 'inline-block';
+    }
+
+    renderMaxBtns();
     document.getElementById('setup').style.display = 'none';
     document.getElementById('app').style.display   = 'block';
+
     fetchStudents();
     startClock();
     setInterval(fetchStudents, 20000);
     setInterval(tick, 1000);
+    if (mode === 'request') setInterval(pollQueue, 4000);
   }
+
+  // ── Clock ──────────────────────────────────────
 
   function startClock() {
     const update = () => {
@@ -224,6 +366,8 @@
     };
     update(); setInterval(update, 1000);
   }
+
+  // ── Students ───────────────────────────────────
 
   function fetchStudents() {
     google.script.run
@@ -272,14 +416,22 @@
   }
 
   function renderGrid() {
+    const outCount = students.filter(s => s.left && !s.returned).length;
+    const atMax    = outCount >= maxOut;
+    document.getElementById('max-banner').style.display = atMax ? 'block' : 'none';
+
     document.getElementById('grid').innerHTML = students.map((s, i) => {
-      let state = '', statusHtml = 'Klicka för att gå';
+      let state = '', statusHtml = 'Klicka för att registrera';
+      if (mode === 'request') statusHtml = 'Klicka för att registrera manuellt';
       if (s.returned) {
         state = 'returned';
         statusHtml = `Gick ${esc(s.left)} · Tillbaka ${esc(s.returned)}`;
       } else if (s.left) {
         state = 'out';
         statusHtml = `Ute sedan kl. ${esc(s.left)}`;
+      } else if (atMax && !s.left) {
+        state = 'maxed';
+        statusHtml = 'Platser fulla';
       }
       const badge = s.visits > 0 ? `<span class="visit-badge">${s.visits}</span>` : '';
       return `
@@ -298,10 +450,21 @@
       `<strong>${out}</strong> ute · <strong>${total}</strong> besök totalt idag`;
   }
 
+  function renderMaxBtns() {
+    document.getElementById('max-btns').innerHTML = [1,2,3,4].map(n =>
+      `<button onclick="changeMax(${n})" class="${n === maxOut ? 'sel' : ''}">${n}</button>`
+    ).join('');
+  }
+
+  // ── Student click handlers ─────────────────────
+
   function handleClick(idx) {
     const s = students[idx];
+    const outCount = students.filter(x => x.left && !x.returned).length;
     if (!s.left) {
-      modal('🚶', `${s.name} lämnar`, `Registrera att ${s.name} går på toaletten nu?`, () => {
+      if (outCount >= maxOut) { toast('Max antal elever är redan ute.'); return; }
+      const label = mode === 'request' ? 'registrera manuellt att' : 'registrera att';
+      modal('🚶', `${s.name} lämnar`, `Vill du ${label} ${s.name} går på toaletten nu?`, () => {
         closeModal();
         google.script.run
           .withSuccessHandler(r => { if (r.success) { toast(`${s.name} – gick ${r.time}`); fetchStudents(); } })
@@ -330,14 +493,103 @@
     });
   }
 
+  // ── Queue (request mode) ───────────────────────
+
+  function pollQueue() {
+    google.script.run
+      .withSuccessHandler(renderQueue)
+      .getPendingRequests(cls);
+  }
+
+  function renderQueue(data) {
+    const waiting = data.queue.filter(r => r.status === 'waiting');
+    const pill    = document.getElementById('q-pill');
+    pill.textContent = waiting.length;
+    pill.classList.toggle('zero', waiting.length === 0);
+
+    const outCount = students.filter(s => s.left && !s.returned).length;
+    const atMax    = outCount >= maxOut;
+
+    const container = document.getElementById('queue-cards');
+    if (!waiting.length) {
+      container.innerHTML = '<div class="no-one-out">Inga ansökningar just nu.</div>';
+      return;
+    }
+    container.innerHTML = waiting.map(r => {
+      const ago = fmtAgo(Date.now() - r.time);
+      return `
+        <div class="req-card">
+          <div class="req-name">${esc(r.name)}</div>
+          <div class="req-time">Ansökte ${ago}</div>
+          <div class="req-btns">
+            <button class="btn-approve" onclick="approveReq(${JSON.stringify(r.name)})"
+              ${atMax ? 'disabled title="Max antal ute"' : ''}>
+              ✓ Godkänn
+            </button>
+            <button class="btn-deny" onclick="denyReq(${JSON.stringify(r.name)})">
+              ✗ Neka
+            </button>
+          </div>
+          ${atMax ? '<div class="max-warning">⚠️ Platser fulla</div>' : ''}
+        </div>`;
+    }).join('');
+  }
+
+  function approveReq(name) {
+    google.script.run
+      .withSuccessHandler(r => {
+        if (r.success) { toast(`${name} godkänd – gick ${r.time}`); fetchStudents(); pollQueue(); }
+        else if (r.reason === 'max_reached') toast('Max antal elever är redan ute.');
+      })
+      .approveRequest(cls, name, testName);
+  }
+
+  function denyReq(name) {
+    google.script.run
+      .withSuccessHandler(() => { toast(`${name} nekad`); pollQueue(); })
+      .denyRequest(cls, name);
+  }
+
+  // ── Max-out setting ────────────────────────────
+
+  function changeMax(n) {
+    maxOut = n;
+    google.script.run.setMaxOut(cls, n);
+    document.getElementById('h-max').textContent = `Max ${n} ute`;
+    renderMaxBtns();
+    render();
+  }
+
+  // ── QR code ────────────────────────────────────
+
+  function showQR() {
+    const url  = WEB_APP_URL + '?view=elev&klass=' + encodeURIComponent(cls);
+    const qUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(url);
+    document.getElementById('qr-img').src = qUrl;
+    document.getElementById('qr-url').textContent = url;
+    document.getElementById('qr-modal').classList.add('open');
+  }
+
+  function closeQR() {
+    document.getElementById('qr-modal').classList.remove('open');
+  }
+
+  document.getElementById('qr-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeQR();
+  });
+
+  // ── Clear session ──────────────────────────────
+
   function confirmClear() {
-    modal('🗑️', 'Rensa session', 'Vill du rensa alla tider för den här sessionen?', () => {
+    modal('🗑️', 'Rensa session', 'Vill du rensa alla tider och ansökningar för den här sessionen?', () => {
       closeModal();
       google.script.run
-        .withSuccessHandler(() => { toast('Sessionen rensad'); fetchStudents(); })
+        .withSuccessHandler(() => { toast('Sessionen rensad'); fetchStudents(); if (mode === 'request') pollQueue(); })
         .clearSession(cls);
     });
   }
+
+  // ── Modal ──────────────────────────────────────
 
   function modal(icon, title, body, onOk) {
     document.getElementById('m-icon').textContent  = icon;
@@ -353,6 +605,8 @@
     if (e.target === e.currentTarget) closeModal();
   });
 
+  // ── Toast ──────────────────────────────────────
+
   let toastT;
   function toast(msg) {
     const el = document.getElementById('toast');
@@ -362,10 +616,18 @@
     toastT = setTimeout(() => el.classList.remove('show'), 2800);
   }
 
+  // ── Helpers ────────────────────────────────────
+
   function fmtTimer(ms) {
     const s = Math.max(0, Math.floor(ms / 1000));
     const m = Math.floor(s / 60);
     return `${String(m).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
+  }
+
+  function fmtAgo(ms) {
+    const m = Math.floor(ms / 60000);
+    if (m < 1) return 'just nu';
+    return `för ${m} min sedan`;
   }
 
   function esc(s) {

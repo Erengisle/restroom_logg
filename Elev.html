@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Toalettbesök – Elev</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #1a73e8; --blue-dk: #1557b0;
+      --green: #34a853; --green-bg: #f0faf4;
+      --red: #ea4335;   --red-bg: #fff3f0;
+      --yellow: #f9ab00; --yellow-bg: #fffde7;
+      --grey: #f1f3f4; --border: #dadce0;
+      --text: #202124; --muted: #5f6368;
+    }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f8f9fa; color: var(--text);
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      background: #fff; border-radius: 24px;
+      padding: 40px 32px 36px;
+      width: 100%; max-width: 360px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.10);
+      text-align: center;
+    }
+
+    .logo { margin-bottom: 28px; }
+    .logo .icon { font-size: 52px; line-height: 1; display: block; }
+    .logo h1 { font-size: 22px; font-weight: 700; color: var(--blue); margin-top: 8px; }
+
+    .form-group { margin-bottom: 16px; text-align: left; }
+    label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
+    select { width: 100%; padding: 12px 14px; border: 2px solid var(--border); border-radius: 10px; font-size: 15px; outline: none; transition: border-color .2s; background: #fff; }
+    select:focus { border-color: var(--blue); }
+
+    .btn-primary {
+      display: block; width: 100%; padding: 15px;
+      background: var(--blue); color: #fff;
+      border: none; border-radius: 12px;
+      font-size: 17px; font-weight: 700; cursor: pointer;
+      margin-top: 24px; transition: background .2s, transform .1s;
+    }
+    .btn-primary:hover { background: var(--blue-dk); }
+    .btn-primary:active { transform: scale(.98); }
+    .btn-primary:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; transform: none; }
+
+    .btn-secondary {
+      display: block; width: 100%; padding: 13px;
+      background: transparent; color: var(--muted);
+      border: 2px solid var(--border); border-radius: 12px;
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      margin-top: 10px; transition: background .15s;
+    }
+    .btn-secondary:hover { background: var(--grey); }
+
+    /* Status screens */
+    .status-screen { display: none; }
+    .status-icon { font-size: 64px; margin-bottom: 16px; line-height: 1; }
+    .status-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    .status-body { font-size: 15px; color: var(--muted); line-height: 1.6; margin-bottom: 24px; }
+
+    /* Waiting */
+    .spinner {
+      width: 56px; height: 56px; margin: 0 auto 16px;
+      border: 5px solid var(--border);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Out - timer */
+    .out-timer {
+      font-size: 52px; font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -1px; color: var(--text);
+      margin: 8px 0 4px;
+    }
+    .out-timer.warn  { color: var(--yellow); }
+    .out-timer.alert { color: var(--red); }
+    .out-since { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+
+    /* Denied */
+    .status-denied .status-title { color: var(--red); }
+
+    /* Returned */
+    .status-returned .status-title { color: var(--green); }
+
+    /* Max banner */
+    .max-info {
+      background: var(--yellow-bg); border: 2px solid var(--yellow);
+      border-radius: 12px; padding: 14px; margin-top: 16px;
+      font-size: 14px; font-weight: 600; color: #7c5c00;
+    }
+
+    .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+    .back-link { font-size: 13px; color: var(--muted); cursor: pointer; }
+    .back-link:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+<div class="card" id="card">
+
+  <!-- ── Setup screen ── -->
+  <div id="screen-setup">
+    <div class="logo">
+      <span class="icon">🚻</span>
+      <h1>Toalettbesök</h1>
+    </div>
+    <div class="form-group" id="cls-group">
+      <label>Klass</label>
+      <select id="cls"></select>
+    </div>
+    <div class="form-group">
+      <label>Ditt namn</label>
+      <select id="name"></select>
+    </div>
+    <button class="btn-primary" onclick="submitRequest()">Ansök om toalettbesök</button>
+    <div id="max-info-setup"></div>
+  </div>
+
+  <!-- ── Waiting screen ── -->
+  <div id="screen-waiting" class="status-screen">
+    <div class="spinner"></div>
+    <div class="status-title">Väntar på godkännande…</div>
+    <div class="status-body">Din ansökan har skickats till läraren. Du får besked strax.</div>
+    <button class="btn-secondary" onclick="cancelReq()">Avbryt ansökan</button>
+  </div>
+
+  <!-- ── Denied screen ── -->
+  <div id="screen-denied" class="status-screen status-denied">
+    <div class="status-icon">❌</div>
+    <div class="status-title">Nekad</div>
+    <div class="status-body">Läraren nekade din ansökan. Du kan försöka igen senare.</div>
+    <button class="btn-primary" onclick="tryAgain()">Försök igen</button>
+  </div>
+
+  <!-- ── Out screen ── -->
+  <div id="screen-out" class="status-screen">
+    <div class="status-icon">✅</div>
+    <div class="status-title" style="color:var(--green)">Godkänd – gå nu!</div>
+    <div class="out-timer" id="out-timer">00:00</div>
+    <div class="out-since" id="out-since"></div>
+    <button class="btn-primary" style="background:var(--green)" onclick="markReturn()">
+      Jag är tillbaka
+    </button>
+  </div>
+
+  <!-- ── Returned screen ── -->
+  <div id="screen-returned" class="status-screen status-returned">
+    <div class="status-icon">🏠</div>
+    <div class="status-title">Tillbaka!</div>
+    <div class="status-body" id="returned-body"></div>
+    <hr class="divider">
+    <span class="back-link" onclick="reset()">← Nytt besök</span>
+  </div>
+
+  <!-- ── Full screen ── -->
+  <div id="screen-full" class="status-screen">
+    <div class="status-icon">⏳</div>
+    <div class="status-title">Platser fulla</div>
+    <div class="status-body">Alla platser är upptagna just nu. Vänta tills någon är tillbaka.</div>
+    <button class="btn-primary" onclick="checkFull()">Uppdatera</button>
+    <hr class="divider">
+    <span class="back-link" onclick="showSetup()">← Tillbaka</span>
+  </div>
+
+</div>
+
+<script>
+  const WARN_MS  = 5  * 60 * 1000;
+  const ALERT_MS = 10 * 60 * 1000;
+  const PRESET   = '<?= presetKlass ?>';
+
+  let cls = '', studentName = '', pollTimer = null, outEpoch = 0;
+
+  // ── Init ──────────────────────────────────────
+
+  window.onload = () => {
+    google.script.run
+      .withSuccessHandler(list => {
+        const sel = document.getElementById('cls');
+        sel.innerHTML = list.length
+          ? list.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')
+          : '<option value="">Inga klasser hittades</option>';
+
+        if (PRESET) {
+          const opts = Array.from(sel.options);
+          const match = opts.find(o => o.value === PRESET);
+          if (match) { sel.value = PRESET; document.getElementById('cls-group').style.display = 'none'; }
+        }
+        loadStudents();
+        sel.addEventListener('change', loadStudents);
+      })
+      .getClasses();
+  };
+
+  function loadStudents() {
+    const selCls = document.getElementById('cls').value;
+    if (!selCls) return;
+    google.script.run
+      .withSuccessHandler(res => {
+        const sel = document.getElementById('name');
+        sel.innerHTML = res.students.length
+          ? res.students.map(s => `<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('')
+          : '<option value="">Inga elever</option>';
+        checkInitialStatus(selCls, sel.value);
+      })
+      .getStudents(selCls);
+  }
+
+  function checkInitialStatus(c, n) {
+    if (!c || !n) return;
+    google.script.run
+      .withSuccessHandler(res => {
+        cls = c; studentName = n;
+        applyStatus(res);
+      })
+      .getStudentStatus(c, n);
+  }
+
+  // ── Submit ────────────────────────────────────
+
+  function submitRequest() {
+    cls         = document.getElementById('cls').value;
+    studentName = document.getElementById('name').value;
+    if (!cls || !studentName) return;
+
+    google.script.run
+      .withSuccessHandler(res => {
+        if (res.success) {
+          show('waiting');
+          startPolling();
+        } else if (res.reason === 'max_reached') {
+          show('full');
+        } else if (res.reason === 'already_out') {
+          startPolling();
+        } else {
+          startPolling();
+        }
+      })
+      .submitRequest(cls, studentName);
+  }
+
+  // ── Polling ───────────────────────────────────
+
+  function startPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    poll();
+    pollTimer = setInterval(poll, 3000);
+  }
+
+  function stopPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  }
+
+  function poll() {
+    google.script.run
+      .withSuccessHandler(applyStatus)
+      .getStudentStatus(cls, studentName);
+  }
+
+  function applyStatus(res) {
+    const { entry, student, maxOut, outCount } = res;
+
+    if (entry) {
+      if (entry.status === 'waiting') { show('waiting'); startPolling(); }
+      else if (entry.status === 'denied') { show('denied'); stopPolling(); }
+      return;
+    }
+
+    if (student && student.left && !student.returned) {
+      outEpoch = student.leftEpoch;
+      document.getElementById('out-since').textContent = `Du gick kl. ${student.left}`;
+      show('out');
+      startOutTimer();
+      startPolling();
+      return;
+    }
+
+    if (student && student.left && student.returned) {
+      document.getElementById('returned-body').textContent =
+        `Du gick kl. ${student.left} och kom tillbaka kl. ${student.returned}.`;
+      show('returned');
+      stopPolling();
+      return;
+    }
+
+    // idle — check if max is reached
+    if (outCount >= maxOut) {
+      show('full');
+      startPolling();
+    } else {
+      show('setup');
+      stopPolling();
+    }
+  }
+
+  // ── Out timer ─────────────────────────────────
+
+  let outTickTimer = null;
+
+  function startOutTimer() {
+    if (outTickTimer) clearInterval(outTickTimer);
+    outTickTimer = setInterval(tickOut, 1000);
+    tickOut();
+  }
+
+  function tickOut() {
+    if (!outEpoch) return;
+    const elapsed = Date.now() - outEpoch;
+    const el = document.getElementById('out-timer');
+    el.textContent = fmtTimer(elapsed);
+    el.className = 'out-timer' +
+      (elapsed >= ALERT_MS ? ' alert' : elapsed >= WARN_MS ? ' warn' : '');
+  }
+
+  // ── Actions ───────────────────────────────────
+
+  function cancelReq() {
+    google.script.run
+      .withSuccessHandler(() => { stopPolling(); show('setup'); })
+      .cancelRequest(cls, studentName);
+  }
+
+  function tryAgain() {
+    google.script.run
+      .withSuccessHandler(() => { show('setup'); })
+      .cancelRequest(cls, studentName);
+  }
+
+  function markReturn() {
+    google.script.run
+      .withSuccessHandler(r => {
+        if (r.success) {
+          if (outTickTimer) clearInterval(outTickTimer);
+          poll();
+        }
+      })
+      .logReturn(cls, studentName, '');
+  }
+
+  function checkFull() {
+    poll();
+  }
+
+  function reset() {
+    show('setup');
+    loadStudents();
+  }
+
+  function showSetup() {
+    show('setup');
+  }
+
+  // ── Screen switcher ───────────────────────────
+
+  const SCREENS = ['setup','waiting','denied','out','returned','full'];
+  function show(name) {
+    SCREENS.forEach(s => {
+      document.getElementById('screen-' + s).style.display = s === name ? 'block' : 'none';
+    });
+  }
+
+  // ── Helpers ───────────────────────────────────
+
+  function fmtTimer(ms) {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    const m = Math.floor(s / 60);
+    return `${String(m).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
