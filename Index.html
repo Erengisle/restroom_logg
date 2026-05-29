@@ -305,7 +305,7 @@
     <p  id="m-body"></p>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModal()">Avbryt</button>
-      <button class="btn-ok" id="m-ok">Bekräfta</button>
+      <button class="btn-ok" id="m-ok" onclick="runConfirm()">Bekräfta</button>
     </div>
   </div>
 </div>
@@ -366,6 +366,7 @@
   let mode = 'direct', maxOut = 2, setupMaxOut = 2, isLektion = false;
   let selectedReason = 'Toalettbesök', pendingLeaveName = '';
   let statsPeriod = 0;
+  let pendingConfirm = null;
 
   // ── Setup ──────────────────────────────────────
 
@@ -878,10 +879,11 @@
     document.getElementById('m-icon').textContent  = icon;
     document.getElementById('m-title').textContent = title;
     document.getElementById('m-body').textContent  = body;
-    document.getElementById('m-ok').onclick        = onOk;
+    pendingConfirm = onOk;
     document.getElementById('overlay').classList.add('open');
   }
-  function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+  function runConfirm() { if (pendingConfirm) { pendingConfirm(); pendingConfirm = null; } }
+  function closeModal() { pendingConfirm = null; document.getElementById('overlay').classList.remove('open'); }
 
   document.getElementById('overlay').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
