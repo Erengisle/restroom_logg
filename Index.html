@@ -7,7 +7,7 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --blue: #1a73e8; --blue-dk: #1557b0;
+      --blue: #1a73e8; --blue-dk: #1557b0; --blue-bg: #e8f0fe;
       --green: #34a853; --green-bg: #f0faf4;
       --red: #ea4335;   --red-bg: #fff3f0;
       --yellow: #f9ab00; --yellow-bg: #fffde7;
@@ -18,36 +18,31 @@
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; color: var(--text); min-height: 100vh; }
 
     /* ── Setup ── */
-    #setup { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
-    .card { background: #fff; border-radius: 20px; padding: 44px 40px 40px; width: 100%; max-width: 480px; box-shadow: 0 4px 24px rgba(0,0,0,.10); }
-    .logo { text-align: center; margin-bottom: 36px; }
-    .logo .icon { font-size: 56px; line-height: 1; display: block; }
-    .logo h1 { font-size: 26px; font-weight: 700; color: var(--blue); margin-top: 10px; letter-spacing: -.3px; }
-    .form-group { margin-bottom: 18px; }
+    #setup { display: flex; align-items: flex-start; justify-content: center; min-height: 100vh; padding: 20px; padding-top: 40px; }
+    .card { background: #fff; border-radius: 20px; padding: 40px 36px 36px; width: 100%; max-width: 480px; box-shadow: 0 4px 24px rgba(0,0,0,.10); }
+    .logo { text-align: center; margin-bottom: 32px; }
+    .logo .icon { font-size: 52px; line-height: 1; display: block; }
+    .logo h1 { font-size: 24px; font-weight: 700; color: var(--blue); margin-top: 8px; }
+    .form-group { margin-bottom: 16px; }
     label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
-    select, input[type="text"], input[type="date"] { width: 100%; padding: 12px 14px; border: 2px solid var(--border); border-radius: 10px; font-size: 15px; outline: none; transition: border-color .2s; background: #fff; }
+    select, input[type="text"], input[type="date"] { width: 100%; padding: 11px 14px; border: 2px solid var(--border); border-radius: 10px; font-size: 15px; outline: none; transition: border-color .2s; background: #fff; }
     select:focus, input:focus { border-color: var(--blue); }
-    .btn-primary { display: block; width: 100%; padding: 14px; background: var(--blue); color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 24px; transition: background .2s, transform .1s; }
+    .hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .btn-primary { display: block; width: 100%; padding: 14px; background: var(--blue); color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 20px; transition: background .2s, transform .1s; }
     .btn-primary:hover { background: var(--blue-dk); }
     .btn-primary:active { transform: scale(.98); }
 
     .mode-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .mode-opt { position: relative; }
     .mode-opt input { position: absolute; opacity: 0; width: 0; height: 0; }
-    .mode-opt span {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 14px 10px; border: 2px solid var(--border); border-radius: 12px;
-      cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted);
-      text-align: center; line-height: 1.4; transition: border-color .2s, color .2s, background .2s;
-    }
-    .mode-opt span em { font-style: normal; font-size: 22px; display: block; margin-bottom: 4px; }
-    .mode-opt input:checked + span { border-color: var(--blue); color: var(--blue); background: #e8f0fe; }
-
+    .mode-opt span { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px 8px; border: 2px solid var(--border); border-radius: 12px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); text-align: center; line-height: 1.4; transition: border-color .2s, color .2s, background .2s; }
+    .mode-opt span em { font-style: normal; font-size: 20px; display: block; margin-bottom: 4px; }
+    .mode-opt input:checked + span { border-color: var(--blue); color: var(--blue); background: var(--blue-bg); }
     .maxout-row { display: flex; gap: 8px; }
     .maxout-row button { flex: 1; padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-size: 16px; font-weight: 700; background: #fff; color: var(--muted); cursor: pointer; transition: all .15s; }
-    .maxout-row button.sel { border-color: var(--blue); background: #e8f0fe; color: var(--blue); }
+    .maxout-row button.sel { border-color: var(--blue); background: var(--blue-bg); color: var(--blue); }
 
-    /* ── App layout ── */
+    /* ── App ── */
     #app { display: none; }
     .header { background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%); color: #fff; padding: 16px 24px 14px; box-shadow: 0 2px 12px rgba(0,0,0,.20); }
     .header-row { display: flex; align-items: center; justify-content: space-between; }
@@ -58,7 +53,7 @@
     .btn-qr:hover { background: rgba(255,255,255,.32); }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
     .chip { background: rgba(255,255,255,.20); padding: 3px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; }
-    .chip.mode-chip { background: rgba(255,255,255,.35); }
+    .chip.lektion-chip { background: rgba(255,255,255,.35); }
 
     /* ── Queue panel ── */
     #queue-panel { padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--purple-bg); display: none; }
@@ -68,47 +63,47 @@
     .count-pill.zero { background: var(--border); color: var(--muted); }
     .count-pill.purple { background: var(--purple); }
     .no-one-out { color: var(--muted); font-size: 14px; padding: 4px 0; }
-
     .req-cards { display: flex; flex-wrap: wrap; gap: 10px; }
-    .req-card { background: #fff; border: 2px solid var(--purple); border-radius: 14px; padding: 12px 14px; min-width: 160px; animation: slideIn .2s ease; }
-    @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
-    .req-name { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+    .req-card { background: #fff; border: 2px solid var(--purple); border-radius: 14px; padding: 12px 14px; min-width: 160px; }
+    .req-name { font-size: 15px; font-weight: 700; margin-bottom: 1px; }
+    .req-reason { font-size: 12px; color: var(--purple); font-weight: 600; margin-bottom: 2px; }
     .req-time { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
     .req-btns { display: flex; gap: 6px; }
     .btn-approve { flex: 1; padding: 7px; background: var(--green); color: #fff; border: none; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; transition: opacity .15s; }
     .btn-approve:hover { opacity: .85; }
     .btn-approve:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; opacity: 1; }
-    .btn-deny { flex: 1; padding: 7px; background: var(--grey); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; transition: background .15s; }
+    .btn-deny { flex: 1; padding: 7px; background: var(--grey); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
     .btn-deny:hover { background: #e0e0e0; }
-    .max-warning { font-size: 12px; color: #c47d00; font-weight: 600; margin-top: 8px; }
+    .max-warning { font-size: 11px; color: #c47d00; font-weight: 600; margin-top: 6px; }
 
     /* ── Active panel ── */
     #active-panel { padding: 16px 24px; border-bottom: 1px solid var(--border); background: #fff; }
     .active-cards { display: flex; flex-wrap: wrap; gap: 10px; }
-    .active-card { display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-radius: 14px; border: 2px solid var(--border); background: var(--grey); min-width: 160px; cursor: pointer; transition: transform .15s, box-shadow .15s; }
-    .active-card:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,.12); }
+    .active-card { display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-radius: 14px; border: 2px solid var(--border); background: var(--grey); min-width: 160px; transition: transform .15s, box-shadow .15s; }
     .active-card.warn  { background: var(--yellow-bg); border-color: var(--yellow); }
     .active-card.alert { background: var(--red-bg); border-color: var(--red); animation: pulse 2s infinite; }
     @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(234,67,53,.4); } 50% { box-shadow: 0 0 0 6px rgba(234,67,53,0); } }
     .ac-name { font-size: 15px; font-weight: 700; }
+    .ac-reason { font-size: 11px; color: var(--muted); }
     .active-card.alert .ac-name { color: var(--red); }
     .active-card.warn  .ac-name { color: #c47d00; }
     .ac-timer { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
     .active-card.alert .ac-timer { color: var(--red); }
     .active-card.warn  .ac-timer { color: var(--yellow); }
     .ac-since { font-size: 11px; color: var(--muted); }
-    .ac-return-btn { margin-top: 8px; padding: 5px 0; background: rgba(255,255,255,.7); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background .15s; }
+    .ac-return-btn { margin-top: 8px; padding: 6px 0; background: rgba(255,255,255,.7); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background .15s; }
     .ac-return-btn:hover { background: #fff; }
 
     /* ── Toolbar ── */
     .toolbar { background: #fff; padding: 10px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-    .stats { font-size: 13px; color: var(--muted); }
-    .stats strong { color: var(--text); }
+    .stats-line { font-size: 13px; color: var(--muted); }
+    .stats-line strong { color: var(--text); }
     .toolbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    #max-section { display: flex; align-items: center; gap: 6px; }
     .max-label { font-size: 12px; color: var(--muted); font-weight: 600; }
     .max-btns { display: flex; gap: 4px; }
     .max-btns button { width: 28px; height: 28px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; background: #fff; color: var(--muted); transition: all .15s; }
-    .max-btns button.sel { border-color: var(--blue); background: #e8f0fe; color: var(--blue); }
+    .max-btns button.sel { border-color: var(--blue); background: var(--blue-bg); color: var(--blue); }
     .btn-ghost { padding: 6px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; cursor: pointer; color: var(--muted); background: transparent; transition: background .15s; white-space: nowrap; }
     .btn-ghost:hover { background: var(--grey); color: var(--text); }
 
@@ -124,11 +119,10 @@
     .s-btn:active { transform: scale(.97); }
     .s-btn.out      { background: var(--red-bg);   border-color: var(--red); }
     .s-btn.returned { background: var(--green-bg); border-color: var(--green); }
-    .s-btn.maxed    { opacity: .55; cursor: not-allowed; }
     .s-dot { position: absolute; top: 10px; right: 11px; width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
     .s-btn.out      .s-dot { background: var(--red); }
     .s-btn.returned .s-dot { background: var(--green); }
-    .s-name { font-size: 14px; font-weight: 700; padding-right: 18px; margin-bottom: 3px; }
+    .s-name { font-size: 14px; font-weight: 700; padding-right: 18px; margin-bottom: 2px; }
     .s-btn.out      .s-name { color: var(--red); }
     .s-btn.returned .s-name { color: var(--green); }
     .s-status { font-size: 11px; color: var(--muted); line-height: 1.4; }
@@ -137,13 +131,20 @@
     .visit-badge { display: inline-block; background: var(--blue); color: #fff; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px; text-align: center; line-height: 16px; padding: 0 4px; margin-left: 4px; vertical-align: middle; }
     .max-banner { background: var(--yellow-bg); border: 1px solid var(--yellow); border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 600; color: #7c5c00; margin-bottom: 12px; display: none; }
 
+    /* ── Reason modal ── */
+    .reason-opts { display: flex; flex-direction: column; gap: 8px; margin: 16px 0 20px; }
+    .reason-btn { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 2px solid var(--border); border-radius: 12px; background: #fff; cursor: pointer; font-size: 15px; font-weight: 600; color: var(--text); text-align: left; transition: border-color .15s, background .15s; }
+    .reason-btn:hover { background: var(--grey); }
+    .reason-btn.sel { border-color: var(--blue); background: var(--blue-bg); color: var(--blue); }
+    .reason-icon { font-size: 22px; flex-shrink: 0; }
+
     /* ── Modals & overlays ── */
     .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200; align-items: center; justify-content: center; }
     .overlay.open { display: flex; }
-    .modal { background: #fff; border-radius: 18px; padding: 30px 28px 24px; max-width: 340px; width: 92%; text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,.20); }
-    .modal .m-icon { font-size: 38px; margin-bottom: 8px; }
+    .modal { background: #fff; border-radius: 18px; padding: 28px 26px 22px; max-width: 340px; width: 92%; text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,.20); }
+    .modal .m-icon { font-size: 36px; margin-bottom: 6px; }
     .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
-    .modal p  { font-size: 14px; color: var(--muted); margin-bottom: 22px; line-height: 1.5; }
+    .modal p  { font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
     .modal-btns { display: flex; gap: 10px; }
     .modal-btns button { flex: 1; padding: 12px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 700; border: none; transition: opacity .15s; }
     .modal-btns button:hover { opacity: .85; }
@@ -151,34 +152,42 @@
     .btn-cancel { background: var(--grey); color: var(--text); }
 
     #qr-modal .modal { max-width: 320px; }
-    .qr-url { font-size: 11px; word-break: break-all; color: var(--muted); margin: 10px 0 16px; background: var(--grey); padding: 8px 10px; border-radius: 8px; text-align: left; }
-    #qr-img { width: 200px; height: 200px; border-radius: 8px; margin: 0 auto 12px; display: block; }
+    .qr-url { font-size: 11px; word-break: break-all; color: var(--muted); margin: 8px 0 14px; background: var(--grey); padding: 8px 10px; border-radius: 8px; text-align: left; }
+    #qr-img { width: 200px; height: 200px; border-radius: 8px; margin: 0 auto 10px; display: block; }
 
-    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(70px); background: #323232; color: #fff; padding: 10px 22px; border-radius: 10px; font-size: 14px; font-weight: 500; opacity: 0; transition: transform .28s, opacity .28s; z-index: 300; pointer-events: none; white-space: nowrap; }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(70px); background: #323232; color: #fff; padding: 10px 22px; border-radius: 10px; font-size: 14px; font-weight: 500; opacity: 0; transition: transform .28s, opacity .28s; z-index: 500; pointer-events: none; white-space: nowrap; }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
     /* ── Statistics overlay ── */
     #stats-overlay { display: none; position: fixed; inset: 0; background: #f8f9fa; z-index: 400; overflow-y: auto; }
-    .st-header { background: #fff; border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 1; }
-    .st-header h2 { font-size: 19px; font-weight: 700; }
-    .btn-back { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; font-size: 14px; cursor: pointer; color: var(--muted); transition: background .15s; }
+    .st-header { background: #fff; border-bottom: 1px solid var(--border); padding: 14px 20px 0; position: sticky; top: 0; z-index: 1; }
+    .st-header-row { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; }
+    .st-header h2 { font-size: 18px; font-weight: 700; flex: 1; }
+    .st-subtitle { font-size: 13px; color: var(--muted); flex: 1; }
+    .btn-back { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 13px; cursor: pointer; color: var(--muted); transition: background .15s; white-space: nowrap; }
     .btn-back:hover { background: var(--grey); }
-    .btn-reload { margin-left: auto; background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; font-size: 13px; cursor: pointer; color: var(--muted); }
-    .st-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 20px 24px 8px; }
-    .st-card { background: #fff; border-radius: 16px; padding: 18px 12px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-    .st-val { font-size: 30px; font-weight: 700; color: var(--blue); letter-spacing: -1px; }
-    .st-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
-    .st-section { padding: 16px 24px; }
+    .btn-reload { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 13px; cursor: pointer; color: var(--muted); transition: background .15s; }
+    .period-tabs { display: flex; gap: 0; overflow-x: auto; padding-bottom: 0; border-top: 1px solid var(--border); }
+    .period-tab { padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--muted); background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; transition: color .15s, border-color .15s; }
+    .period-tab:hover { color: var(--text); }
+    .period-tab.sel { color: var(--blue); border-bottom-color: var(--blue); }
+    .st-period-label { padding: 12px 24px 0; font-size: 13px; color: var(--muted); font-style: italic; }
+    .st-summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 14px 20px 4px; }
+    .st-summary.wide { grid-template-columns: repeat(3, 1fr); }
+    .st-card { background: #fff; border-radius: 14px; padding: 16px 12px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    .st-val { font-size: 26px; font-weight: 700; color: var(--blue); letter-spacing: -1px; }
+    .st-val.red { color: var(--red); }
+    .st-val.green { color: var(--green); }
+    .st-lbl { font-size: 11px; color: var(--muted); margin-top: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+    .st-section { padding: 14px 20px; }
     .st-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 10px; }
     .st-table { width: 100%; background: #fff; border-radius: 12px; overflow: hidden; border-collapse: collapse; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-    .st-table th { padding: 11px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); border-bottom: 2px solid var(--border); }
-    .st-table td { padding: 11px 14px; font-size: 14px; border-bottom: 1px solid var(--grey); }
+    .st-table th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); border-bottom: 2px solid var(--border); }
+    .st-table td { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid var(--grey); }
     .st-table tr:last-child td { border-bottom: none; }
-    .row-out  td:first-child::before { content: '🚶 '; }
-    .row-back td:first-child::before { content: '🏃 '; }
-    .row-out  td { color: var(--red); }
-    .row-back td { color: var(--green); }
+    .reason-pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; background: var(--blue-bg); color: var(--blue); }
     .st-loading { padding: 40px 24px; text-align: center; color: var(--muted); }
+    .st-empty { padding: 48px 24px; text-align: center; color: var(--muted); font-size: 15px; }
   </style>
 </head>
 <body>
@@ -195,14 +204,15 @@
       <select id="cls"></select>
     </div>
     <div class="form-group">
-      <label>Provets namn</label>
+      <label>Provets namn <span style="font-weight:400;text-transform:none">(lämna tomt för vanlig lektion)</span></label>
       <input type="text" id="test-name" placeholder="t.ex. Nationella provet svenska">
+      <div class="hint">Tom = lektion utan begränsning i antal</div>
     </div>
     <div class="form-group">
       <label>Datum</label>
       <input type="date" id="session-date">
     </div>
-    <div class="form-group">
+    <div class="form-group" id="maxout-group">
       <label>Max elever ute samtidigt</label>
       <div class="maxout-row" id="maxout-setup">
         <button type="button" onclick="selectMax(1)">1</button>
@@ -242,38 +252,34 @@
       <span class="chip" id="h-class"></span>
       <span class="chip" id="h-test"></span>
       <span class="chip" id="h-date"></span>
-      <span class="chip mode-chip" id="h-mode"></span>
+      <span class="chip" id="h-mode"></span>
       <span class="chip" id="h-max"></span>
     </div>
   </div>
 
-  <!-- Queue panel (only in request mode) -->
   <div id="queue-panel">
     <div class="panel-header">
       <div class="panel-title">Ansökningar</div>
       <div class="count-pill zero purple" id="q-pill">0</div>
     </div>
-    <div id="queue-cards" class="req-cards">
-      <div class="no-one-out">Inga ansökningar just nu.</div>
-    </div>
+    <div id="queue-cards" class="req-cards"><div class="no-one-out">Inga ansökningar just nu.</div></div>
   </div>
 
-  <!-- Active panel -->
   <div id="active-panel">
     <div class="panel-header">
       <div class="panel-title">Ute just nu</div>
       <div class="count-pill zero" id="out-pill">0</div>
     </div>
-    <div id="active-cards" class="active-cards">
-      <div class="no-one-out">Ingen elev är ute just nu.</div>
-    </div>
+    <div id="active-cards" class="active-cards"><div class="no-one-out">Ingen elev är ute just nu.</div></div>
   </div>
 
   <div class="toolbar">
-    <div class="stats" id="stats">Laddar…</div>
+    <div class="stats-line" id="stats-line">Laddar…</div>
     <div class="toolbar-right">
-      <span class="max-label">Max ute:</span>
-      <div class="max-btns" id="max-btns"></div>
+      <div id="max-section">
+        <span class="max-label">Max ute:</span>
+        <div class="max-btns" id="max-btns"></div>
+      </div>
       <button class="btn-ghost" onclick="openStats()">Statistik</button>
       <button class="btn-ghost" onclick="confirmClear()">Rensa session</button>
     </div>
@@ -304,14 +310,17 @@
   </div>
 </div>
 
-<!-- Statistics overlay -->
-<div id="stats-overlay">
-  <div class="st-header">
-    <button class="btn-back" onclick="closeStats()">← Tillbaka</button>
-    <h2 id="st-title">Statistik</h2>
-    <button class="btn-reload" onclick="loadStats()">↺ Uppdatera</button>
+<!-- Reason modal -->
+<div class="overlay" id="reason-overlay">
+  <div class="modal">
+    <h2 id="reason-student" style="margin-bottom:4px"></h2>
+    <p style="margin-bottom:0">Välj orsak till frånvaron</p>
+    <div class="reason-opts" id="reason-opts"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeReasonModal()">Avbryt</button>
+      <button class="btn-ok" onclick="confirmLeave()">Skicka ut</button>
+    </div>
   </div>
-  <div id="stats-content"><div class="st-loading">Laddar…</div></div>
 </div>
 
 <!-- QR modal -->
@@ -325,15 +334,38 @@
   </div>
 </div>
 
+<!-- Statistics overlay -->
+<div id="stats-overlay">
+  <div class="st-header">
+    <div class="st-header-row">
+      <button class="btn-back" onclick="closeStats()">← Tillbaka</button>
+      <h2 id="st-title">Statistik</h2>
+      <button class="btn-reload" onclick="loadStats()">↺</button>
+    </div>
+    <div id="period-tabs" class="period-tabs"></div>
+  </div>
+  <div id="st-period-label" class="st-period-label"></div>
+  <div id="stats-content"><div class="st-loading">Laddar…</div></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-  const WARN_MS   = 5  * 60 * 1000;
-  const ALERT_MS  = 10 * 60 * 1000;
+  const WARN_MS    = 5  * 60 * 1000;
+  const ALERT_MS   = 10 * 60 * 1000;
   const WEB_APP_URL = '<?= webAppUrl ?>';
+  const SV_MONTHS  = ['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+  const REASONS    = [
+    { key: 'Toalettbesök',  icon: '🚻', label: 'Toalettbesök'  },
+    { key: 'Skolsyster',    icon: '🏥', label: 'Skolsyster'    },
+    { key: 'Kurator',       icon: '💬', label: 'Kurator'       },
+    { key: 'Telefonsamtal', icon: '📞', label: 'Telefonsamtal' }
+  ];
 
   let students = [], cls = '', testName = '', dateStr = '';
-  let mode = 'direct', maxOut = 2, setupMaxOut = 2;
+  let mode = 'direct', maxOut = 2, setupMaxOut = 2, isLektion = false;
+  let selectedReason = 'Toalettbesök', pendingLeaveName = '';
+  let statsPeriod = 0;
 
   // ── Setup ──────────────────────────────────────
 
@@ -346,7 +378,13 @@
           ? list.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')
           : '<option value="">Inga flikar hittades</option>';
       })
+      .withFailureHandler(e => toast('Kunde inte hämta klasser: ' + e.message))
       .getClasses();
+
+    document.getElementById('test-name').addEventListener('input', () => {
+      const empty = !document.getElementById('test-name').value.trim();
+      document.getElementById('maxout-group').style.opacity = empty ? '.4' : '1';
+    });
   };
 
   function selectMax(n) {
@@ -361,19 +399,23 @@
     testName = document.getElementById('test-name').value.trim();
     const dv = document.getElementById('session-date').value;
     mode     = document.querySelector('input[name="mode"]:checked').value;
-    if (!cls || !testName || !dv) { toast('Fyll i klass, provets namn och datum.'); return; }
+    if (!cls || !dv) { toast('Fyll i klass och datum.'); return; }
+
+    isLektion = !testName;
+    maxOut    = isLektion ? 999 : setupMaxOut;
+
     const [y, m, d] = dv.split('-');
-    const months = ['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'];
-    dateStr = `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
-    maxOut  = setupMaxOut;
+    dateStr = `${parseInt(d)} ${SV_MONTHS[parseInt(m)-1]} ${y}`;
 
     google.script.run.setMaxOut(cls, maxOut);
 
     document.getElementById('h-class').textContent = cls;
-    document.getElementById('h-test').textContent  = testName;
+    document.getElementById('h-test').textContent  = isLektion ? '📖 Lektion' : testName;
     document.getElementById('h-date').textContent  = dateStr;
     document.getElementById('h-mode').textContent  = mode === 'direct' ? '👆 Direkt' : '📲 Elevansökan';
-    document.getElementById('h-max').textContent   = `Max ${maxOut} ute`;
+    document.getElementById('h-max').textContent   = isLektion ? 'Inga begränsningar' : `Max ${maxOut} ute`;
+
+    document.getElementById('max-section').style.display = isLektion ? 'none' : 'flex';
 
     if (mode === 'request') {
       document.getElementById('queue-panel').style.display = 'block';
@@ -410,7 +452,7 @@
       .getStudents(cls);
   }
 
-  function render() { renderActive(); renderGrid(); renderStats(); }
+  function render() { renderActive(); renderGrid(); renderStatsLine(); }
 
   function tick() {
     document.querySelectorAll('[data-epoch]').forEach(el => {
@@ -451,20 +493,18 @@
 
   function renderGrid() {
     const outCount = students.filter(s => s.left && !s.returned).length;
-    const atMax    = outCount >= maxOut;
+    const atMax    = !isLektion && outCount >= maxOut;
     document.getElementById('max-banner').style.display = atMax ? 'block' : 'none';
 
     document.getElementById('grid').innerHTML = students.map((s, i) => {
       let state = '', statusHtml = 'Klicka för att registrera';
-      if (mode === 'request') statusHtml = 'Klicka för att registrera manuellt';
       if (s.returned) {
         state = 'returned';
         statusHtml = `Gick ${esc(s.left)} · Tillbaka ${esc(s.returned)}`;
       } else if (s.left) {
         state = 'out';
         statusHtml = `Ute sedan kl. ${esc(s.left)}`;
-      } else if (atMax && !s.left) {
-        state = 'maxed';
+      } else if (atMax) {
         statusHtml = 'Platser fulla';
       }
       const badge = s.visits > 0 ? `<span class="visit-badge">${s.visits}</span>` : '';
@@ -477,10 +517,10 @@
     }).join('');
   }
 
-  function renderStats() {
+  function renderStatsLine() {
     const total = students.reduce((n, s) => n + (s.visits || 0), 0);
     const out   = students.filter(s => s.left && !s.returned).length;
-    document.getElementById('stats').innerHTML =
+    document.getElementById('stats-line').innerHTML =
       `<strong>${out}</strong> ute · <strong>${total}</strong> besök totalt idag`;
   }
 
@@ -496,14 +536,8 @@
     const s = students[idx];
     const outCount = students.filter(x => x.left && !x.returned).length;
     if (!s.left) {
-      if (outCount >= maxOut) { toast('Max antal elever är redan ute.'); return; }
-      const label = mode === 'request' ? 'registrera manuellt att' : 'registrera att';
-      modal('🚶', `${s.name} lämnar`, `Vill du ${label} ${s.name} går på toaletten nu?`, () => {
-        closeModal();
-        google.script.run
-          .withSuccessHandler(r => { if (r.success) { toast(`${s.name} – gick ${r.time}`); fetchStudents(); } })
-          .logLeave(cls, s.name, testName);
-      });
+      if (!isLektion && outCount >= maxOut) { toast('Max antal elever är redan ute.'); return; }
+      showReasonModal(s.name);
     } else if (!s.returned) {
       handleReturn(s.name);
     } else {
@@ -527,6 +561,40 @@
     });
   }
 
+  // ── Reason modal ───────────────────────────────
+
+  function showReasonModal(name) {
+    pendingLeaveName = name;
+    selectedReason   = 'Toalettbesök';
+    document.getElementById('reason-student').textContent = name;
+    document.getElementById('reason-opts').innerHTML = REASONS.map(r =>
+      `<button class="reason-btn ${r.key === 'Toalettbesök' ? 'sel' : ''}"
+              onclick="selectReason('${r.key}', this)">
+        <span class="reason-icon">${r.icon}</span>
+        <span>${r.label}</span>
+      </button>`
+    ).join('');
+    document.getElementById('reason-overlay').classList.add('open');
+  }
+
+  function selectReason(key, el) {
+    selectedReason = key;
+    document.querySelectorAll('.reason-btn').forEach(b => b.classList.remove('sel'));
+    el.classList.add('sel');
+  }
+
+  function closeReasonModal() {
+    document.getElementById('reason-overlay').classList.remove('open');
+  }
+
+  function confirmLeave() {
+    closeReasonModal();
+    const name = pendingLeaveName;
+    google.script.run
+      .withSuccessHandler(r => { if (r.success) { toast(`${name} – gick ${r.time}`); fetchStudents(); } })
+      .logLeave(cls, name, testName, selectedReason);
+  }
+
   // ── Queue (request mode) ───────────────────────
 
   function pollQueue() {
@@ -536,33 +604,29 @@
   }
 
   function renderQueue(data) {
-    const waiting = data.queue.filter(r => r.status === 'waiting');
-    const pill    = document.getElementById('q-pill');
+    const waiting  = data.queue.filter(r => r.status === 'waiting');
+    const pill     = document.getElementById('q-pill');
     pill.textContent = waiting.length;
     pill.classList.toggle('zero', waiting.length === 0);
 
     const outCount = students.filter(s => s.left && !s.returned).length;
-    const atMax    = outCount >= maxOut;
-
+    const atMax    = !isLektion && outCount >= maxOut;
     const container = document.getElementById('queue-cards');
     if (!waiting.length) {
       container.innerHTML = '<div class="no-one-out">Inga ansökningar just nu.</div>';
       return;
     }
     container.innerHTML = waiting.map(r => {
-      const ago = fmtAgo(Date.now() - r.time);
+      const reasonInfo = REASONS.find(x => x.key === r.reason) || REASONS[0];
       return `
         <div class="req-card">
           <div class="req-name">${esc(r.name)}</div>
-          <div class="req-time">Ansökte ${ago}</div>
+          <div class="req-reason">${reasonInfo.icon} ${esc(r.reason || 'Toalettbesök')}</div>
+          <div class="req-time">Ansökte ${fmtAgo(Date.now() - r.time)}</div>
           <div class="req-btns">
             <button class="btn-approve" onclick="approveReq(${JSON.stringify(r.name)})"
-              ${atMax ? 'disabled title="Max antal ute"' : ''}>
-              ✓ Godkänn
-            </button>
-            <button class="btn-deny" onclick="denyReq(${JSON.stringify(r.name)})">
-              ✗ Neka
-            </button>
+              ${atMax ? 'disabled' : ''}>✓ Godkänn</button>
+            <button class="btn-deny" onclick="denyReq(${JSON.stringify(r.name)})">✗ Neka</button>
           </div>
           ${atMax ? '<div class="max-warning">⚠️ Platser fulla</div>' : ''}
         </div>`;
@@ -584,7 +648,7 @@
       .denyRequest(cls, name);
   }
 
-  // ── Max-out setting ────────────────────────────
+  // ── Max-out ────────────────────────────────────
 
   function changeMax(n) {
     maxOut = n;
@@ -594,23 +658,15 @@
     render();
   }
 
-  // ── QR code ────────────────────────────────────
+  // ── QR ─────────────────────────────────────────
 
   function showQR() {
     const url  = WEB_APP_URL + '?view=elev&klass=' + encodeURIComponent(cls);
-    const qUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(url);
-    document.getElementById('qr-img').src = qUrl;
+    document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(url);
     document.getElementById('qr-url').textContent = url;
     document.getElementById('qr-modal').classList.add('open');
   }
-
-  function closeQR() {
-    document.getElementById('qr-modal').classList.remove('open');
-  }
-
-  document.getElementById('qr-modal').addEventListener('click', e => {
-    if (e.target === e.currentTarget) closeQR();
-  });
+  function closeQR() { document.getElementById('qr-modal').classList.remove('open'); }
 
   // ── Clear session ──────────────────────────────
 
@@ -623,6 +679,199 @@
     });
   }
 
+  // ── Statistics ─────────────────────────────────
+
+  const PERIOD_LABELS = ['Idag', 'En vecka', 'Två veckor', 'Tre veckor', 'Fyra veckor'];
+
+  function openStats() {
+    statsPeriod = 0;
+    document.getElementById('st-title').textContent = `Statistik – ${cls}`;
+    document.getElementById('stats-overlay').style.display = 'block';
+    renderPeriodTabs();
+    loadStats();
+  }
+
+  function closeStats() {
+    document.getElementById('stats-overlay').style.display = 'none';
+  }
+
+  function switchPeriod(w) {
+    statsPeriod = w;
+    renderPeriodTabs();
+    loadStats();
+  }
+
+  function renderPeriodTabs() {
+    document.getElementById('period-tabs').innerHTML = PERIOD_LABELS.map((l, i) =>
+      `<button class="period-tab ${i === statsPeriod ? 'sel' : ''}" onclick="switchPeriod(${i})">${l}</button>`
+    ).join('');
+  }
+
+  function loadStats() {
+    document.getElementById('stats-content').innerHTML = '<div class="st-loading">Laddar…</div>';
+    google.script.run
+      .withSuccessHandler(renderStatsData)
+      .withFailureHandler(e => {
+        document.getElementById('stats-content').innerHTML = '<div class="st-loading">Fel: ' + esc(e.message) + '</div>';
+      })
+      .getStats(cls, statsPeriod);
+  }
+
+  function renderStatsData(data) {
+    const { rows } = data;
+
+    // Period label with month name(s)
+    const now        = new Date();
+    const monthName  = SV_MONTHS[now.getMonth()];
+    let periodText   = '';
+    if (statsPeriod === 0) {
+      periodText = `Idag – ${parseInt(now.getDate())} ${monthName} ${now.getFullYear()}`;
+    } else {
+      const cutoff   = new Date(now.getTime() - statsPeriod * 7 * 24 * 60 * 60 * 1000);
+      const m1       = SV_MONTHS[cutoff.getMonth()];
+      const m2       = monthName;
+      const yStart   = cutoff.getFullYear();
+      const yEnd     = now.getFullYear();
+      const sameMonth = m1 === m2 && yStart === yEnd;
+      const label     = sameMonth ? `${m2} ${yEnd}` : `${m1}–${m2} ${yEnd}`;
+      const days      = statsPeriod * 7;
+      periodText = `Total avvikelsetid från lektioner för ${label}`;
+    }
+    document.getElementById('st-period-label').textContent = periodText;
+
+    if (!rows.length) {
+      document.getElementById('stats-content').innerHTML = '<div class="st-empty">Inga händelser loggade för den här perioden.</div>';
+      return;
+    }
+
+    const gickRows = rows.filter(r => r.event === 'Gick');
+    const backRows = rows.filter(r => r.event === 'Tillbaka' && r.duration != null);
+    const totalVisits  = gickRows.length;
+    const totalLostMin = backRows.reduce((sum, r) => sum + r.duration, 0);
+    const avgDur       = backRows.length ? totalLostMin / backRows.length : 0;
+    const maxDur       = backRows.length ? Math.max(...backRows.map(r => r.duration)) : 0;
+
+    // By reason
+    const byReason = {};
+    gickRows.forEach(r => {
+      const k = r.reason || 'Toalettbesök';
+      byReason[k] = (byReason[k] || 0) + 1;
+    });
+
+    // By student
+    const byStudent = {};
+    rows.forEach(r => {
+      if (!byStudent[r.student]) byStudent[r.student] = { visits: 0, totalMin: 0, durations: [], reasons: {} };
+      if (r.event === 'Gick') {
+        byStudent[r.student].visits++;
+        const k = r.reason || 'Toalettbesök';
+        byStudent[r.student].reasons[k] = (byStudent[r.student].reasons[k] || 0) + 1;
+      }
+      if (r.event === 'Tillbaka' && r.duration != null) {
+        byStudent[r.student].totalMin += r.duration;
+        byStudent[r.student].durations.push(r.duration);
+      }
+    });
+
+    const summaryHtml = `
+      <div class="st-summary wide">
+        <div class="st-card">
+          <div class="st-val">${totalVisits}</div>
+          <div class="st-lbl">Besök totalt</div>
+        </div>
+        <div class="st-card">
+          <div class="st-val red">${backRows.length ? fmtMin(totalLostMin) : '–'}</div>
+          <div class="st-lbl">Förlorad lektionstid</div>
+        </div>
+        <div class="st-card">
+          <div class="st-val">${backRows.length ? fmtMin(avgDur) : '–'}</div>
+          <div class="st-lbl">Genomsnittstid</div>
+        </div>
+      </div>`;
+
+    const reasonHtml = Object.keys(byReason).length > 1 ? `
+      <div class="st-section">
+        <div class="st-section-title">Per orsak</div>
+        <table class="st-table">
+          <thead><tr><th>Orsak</th><th>Antal besök</th></tr></thead>
+          <tbody>${Object.entries(byReason).sort((a,b) => b[1]-a[1]).map(([k, v]) => {
+            const r = REASONS.find(x => x.key === k) || { icon: '•' };
+            return `<tr><td>${r.icon} ${esc(k)}</td><td>${v}</td></tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>` : '';
+
+    const studentRows = Object.entries(byStudent)
+      .filter(([, s]) => s.visits > 0)
+      .sort((a, b) => b[1].totalMin - a[1].totalMin)
+      .map(([name, s]) => {
+        const topReason = Object.entries(s.reasons).sort((a,b)=>b[1]-a[1])[0];
+        const r = topReason ? (REASONS.find(x => x.key === topReason[0]) || { icon: '' }) : { icon: '' };
+        return `<tr>
+          <td>${esc(name)}</td>
+          <td style="text-align:center">${s.visits}</td>
+          <td>${s.durations.length ? fmtMin(s.totalMin) : '–'}</td>
+          <td>${s.durations.length ? fmtMin(s.totalMin / s.durations.length) : '–'}</td>
+          <td>${topReason ? `${r.icon} ${esc(topReason[0])}` : '–'}</td>
+        </tr>`;
+      }).join('');
+
+    // Per-day (multi-week only)
+    let perDayHtml = '';
+    if (statsPeriod > 0) {
+      const byDate = {};
+      rows.forEach(r => {
+        if (!byDate[r.date]) byDate[r.date] = { visits: 0, lostMin: 0 };
+        if (r.event === 'Gick') byDate[r.date].visits++;
+        if (r.event === 'Tillbaka' && r.duration) byDate[r.date].lostMin += r.duration;
+      });
+      const dateRows = Object.entries(byDate).sort((a,b) => b[0].localeCompare(a[0]));
+      perDayHtml = `
+        <div class="st-section">
+          <div class="st-section-title">Per dag</div>
+          <table class="st-table">
+            <thead><tr><th>Datum</th><th>Besök</th><th>Förlorad tid</th></tr></thead>
+            <tbody>${dateRows.map(([date, d]) => {
+              const parts = date.split('-');
+              const label = `${parseInt(parts[2])} ${SV_MONTHS[parseInt(parts[1])-1]}`;
+              return `<tr><td>${label}</td><td>${d.visits}</td><td>${d.lostMin > 0 ? fmtMin(d.lostMin) : '–'}</td></tr>`;
+            }).join('')}</tbody>
+          </table>
+        </div>`;
+    }
+
+    // Log table (today only to keep it readable)
+    let logHtml = '';
+    if (statsPeriod === 0) {
+      logHtml = `
+        <div class="st-section">
+          <div class="st-section-title">Händelselogg</div>
+          <table class="st-table">
+            <thead><tr><th>Tid</th><th>Elev</th><th>Orsak</th><th>Längd</th></tr></thead>
+            <tbody>${rows.filter(r => r.event === 'Gick').map(r => `
+              <tr>
+                <td>${esc(r.time)}</td>
+                <td>${esc(r.student)}</td>
+                <td>${esc(r.reason || 'Toalettbesök')}</td>
+                <td>${r.duration != null ? fmtMin(r.duration) : '–'}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    }
+
+    document.getElementById('stats-content').innerHTML =
+      summaryHtml + reasonHtml +
+      `<div class="st-section">
+        <div class="st-section-title">Per elev</div>
+        <table class="st-table">
+          <thead><tr><th>Elev</th><th>Besök</th><th>Total tid</th><th>Snitt</th><th>Vanligast</th></tr></thead>
+          <tbody>${studentRows}</tbody>
+        </table>
+      </div>` +
+      perDayHtml + logHtml;
+  }
+
   // ── Modal ──────────────────────────────────────
 
   function modal(icon, title, body, onOk) {
@@ -632,11 +881,16 @@
     document.getElementById('m-ok').onclick        = onOk;
     document.getElementById('overlay').classList.add('open');
   }
-
   function closeModal() { document.getElementById('overlay').classList.remove('open'); }
 
-  document.getElementById('overlay').addEventListener('click', e => {
-    if (e.target === e.currentTarget) closeModal();
+  document.getElementById('overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+  document.getElementById('reason-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeReasonModal();
+  });
+  document.getElementById('qr-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeQR();
   });
 
   // ── Toast ──────────────────────────────────────
@@ -652,103 +906,21 @@
 
   // ── Helpers ────────────────────────────────────
 
-  // ── Statistics ─────────────────────────────────
-
-  function openStats() {
-    document.getElementById('st-title').textContent = `Statistik – ${cls}`;
-    document.getElementById('stats-overlay').style.display = 'block';
-    loadStats();
-  }
-
-  function closeStats() {
-    document.getElementById('stats-overlay').style.display = 'none';
-  }
-
-  function loadStats() {
-    document.getElementById('stats-content').innerHTML = '<div class="st-loading">Laddar…</div>';
-    google.script.run
-      .withSuccessHandler(renderStatsData)
-      .withFailureHandler(e => { document.getElementById('stats-content').innerHTML = '<div class="st-loading">Fel: ' + esc(e.message) + '</div>'; })
-      .getStats(cls);
-  }
-
-  function renderStatsData(data) {
-    const { rows } = data;
-    if (!rows.length) {
-      document.getElementById('stats-content').innerHTML = '<div class="st-loading">Inga händelser loggade ännu.</div>';
-      return;
-    }
-    const byStudent = {};
-    rows.forEach(r => {
-      if (!byStudent[r.student]) byStudent[r.student] = { visits: 0, totalMin: 0, durations: [] };
-      if (r.event === 'Gick') byStudent[r.student].visits++;
-      if (r.event === 'Tillbaka' && r.duration !== null) {
-        byStudent[r.student].totalMin += r.duration;
-        byStudent[r.student].durations.push(r.duration);
-      }
-    });
-    const completed = rows.filter(r => r.event === 'Tillbaka' && r.duration !== null).map(r => r.duration);
-    const totalVisits = rows.filter(r => r.event === 'Gick').length;
-    const avgDur  = completed.length ? completed.reduce((a, b) => a + b, 0) / completed.length : 0;
-    const maxDur  = completed.length ? Math.max(...completed) : 0;
-
-    const studentRows = Object.entries(byStudent)
-      .filter(([, s]) => s.visits > 0)
-      .sort((a, b) => b[1].totalMin - a[1].totalMin)
-      .map(([name, s]) => `
-        <tr>
-          <td>${esc(name)}</td>
-          <td style="text-align:center">${s.visits}</td>
-          <td>${s.durations.length ? fmtMin(s.totalMin) : '–'}</td>
-          <td>${s.durations.length ? fmtMin(s.totalMin / s.durations.length) : '–'}</td>
-        </tr>`).join('');
-
-    const logRows = rows.map(r => `
-      <tr class="${r.event === 'Gick' ? 'row-out' : 'row-back'}">
-        <td>${esc(r.time)}</td>
-        <td>${esc(r.student)}</td>
-        <td>${r.event}</td>
-        <td>${r.duration !== null ? fmtMin(r.duration) : '–'}</td>
-      </tr>`).join('');
-
-    document.getElementById('stats-content').innerHTML = `
-      <div class="st-summary">
-        <div class="st-card"><div class="st-val">${totalVisits}</div><div class="st-lbl">Besök totalt</div></div>
-        <div class="st-card"><div class="st-val">${completed.length ? fmtMin(avgDur) : '–'}</div><div class="st-lbl">Genomsnittstid</div></div>
-        <div class="st-card"><div class="st-val">${completed.length ? fmtMin(maxDur) : '–'}</div><div class="st-lbl">Längst besök</div></div>
-      </div>
-      <div class="st-section">
-        <div class="st-section-title">Per elev</div>
-        <table class="st-table">
-          <thead><tr><th>Elev</th><th>Besök</th><th>Total tid</th><th>Snitt</th></tr></thead>
-          <tbody>${studentRows}</tbody>
-        </table>
-      </div>
-      <div class="st-section">
-        <div class="st-section-title">Händelselogg</div>
-        <table class="st-table">
-          <thead><tr><th>Tid</th><th>Elev</th><th>Händelse</th><th>Längd</th></tr></thead>
-          <tbody>${logRows}</tbody>
-        </table>
-      </div>`;
-  }
-
-  function fmtMin(min) {
-    const m = Math.floor(min);
-    const s = Math.round((min - m) * 60);
-    return `${m}:${String(s).padStart(2, '0')} min`;
-  }
-
   function fmtTimer(ms) {
     const s = Math.max(0, Math.floor(ms / 1000));
     const m = Math.floor(s / 60);
     return `${String(m).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
   }
 
+  function fmtMin(min) {
+    const m = Math.floor(min);
+    const s = Math.round((min - m) * 60);
+    return `${m}:${String(s).padStart(2,'0')} min`;
+  }
+
   function fmtAgo(ms) {
     const m = Math.floor(ms / 60000);
-    if (m < 1) return 'just nu';
-    return `för ${m} min sedan`;
+    return m < 1 ? 'just nu' : `för ${m} min sedan`;
   }
 
   function esc(s) {

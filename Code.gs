@@ -50,7 +50,7 @@ function getStudents(className) {
   return { students, serverTime: Date.now() };
 }
 
-function logLeave(className, studentName, testName) {
+function logLeave(className, studentName, testName, reason) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(className);
   const now   = new Date();
   const tz    = Session.getScriptTimeZone();
@@ -61,7 +61,7 @@ function logLeave(className, studentName, testName) {
   sheet.getRange(row, COL_LEFT).setValue(time);
   sheet.getRange(row, COL_RET).setValue('');
   sheet.getRange(row, COL_EPOCH).setValue(epoch);
-  _appendLog(className, testName, studentName, 'Gick', time, tz);
+  _appendLog(className, testName, studentName, 'Gick', time, tz, null, reason || 'Toalettbesök');
   return { success: true, time, epoch };
 }
 
@@ -77,7 +77,7 @@ function logReturn(className, studentName, testName) {
   const durationMin = durationMs > 0 ? Math.round(durationMs / 6000) / 10 : null;
   sheet.getRange(row, COL_RET).setValue(time);
   sheet.getRange(row, COL_EPOCH).setValue('');
-  _appendLog(className, testName, studentName, 'Tillbaka', time, tz, durationMin);
+  _appendLog(className, testName, studentName, 'Tillbaka', time, tz, durationMin, null);
   return { success: true, time, durationMin };
 }
 
@@ -124,8 +124,8 @@ function getPendingRequests(className) {
   return { queue: _getQueue(className), maxOut: getMaxOut(className) };
 }
 
-function submitRequest(className, studentName) {
-  const queue   = _getQueue(className);
+function submitRequest(className, studentName, reason) {
+  const queue    = _getQueue(className);
   const existing = queue.find(r => r.name === studentName);
   if (existing && existing.status === 'waiting') return { success: false, reason: 'already_queued' };
   const data     = getStudents(className);
@@ -134,7 +134,7 @@ function submitRequest(className, studentName) {
   const outCount = data.students.filter(s => s.left && !s.returned).length;
   if (outCount >= getMaxOut(className)) return { success: false, reason: 'max_reached' };
   const clean = queue.filter(r => r.name !== studentName);
-  clean.push({ name: studentName, time: Date.now(), status: 'waiting' });
+  clean.push({ name: studentName, time: Date.now(), status: 'waiting', reason: reason || 'Toalettbesök' });
   _saveQueue(className, clean);
   return { success: true };
 }
@@ -143,8 +143,11 @@ function approveRequest(className, studentName, testName) {
   const data     = getStudents(className);
   const outCount = data.students.filter(s => s.left && !s.returned).length;
   if (outCount >= getMaxOut(className)) return { success: false, reason: 'max_reached' };
-  _saveQueue(className, _getQueue(className).filter(r => r.name !== studentName));
-  return logLeave(className, studentName, testName);
+  const queue  = _getQueue(className);
+  const entry  = queue.find(r => r.name === studentName);
+  const reason = entry ? (entry.reason || 'Toalettbesök') : 'Toalettbesök';
+  _saveQueue(className, queue.filter(r => r.name !== studentName));
+  return logLeave(className, studentName, testName, reason);
 }
 
 function denyRequest(className, studentName) {
@@ -167,6 +170,40 @@ function getStudentStatus(className, studentName) {
   const student  = data.students.find(s => s.name === studentName) || null;
   const outCount = data.students.filter(s => s.left && !s.returned).length;
   return { entry, student, maxOut: getMaxOut(className), outCount, serverTime: data.serverTime };
+}
+
+// ── Statistik ─────────────────────────────────────
+
+function getStats(className, weeks) {
+  const ss  = SpreadsheetApp.getActiveSpreadsheet();
+  const log = ss.getSheetByName(LOG_SHEET);
+  if (!log || log.getLastRow() < 2) return { rows: [] };
+  const tz    = Session.getScriptTimeZone();
+  const today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  let cutoffStr = today;
+  if (weeks > 0) {
+    const cutoff = new Date(new Date().getTime() - weeks * 7 * 24 * 60 * 60 * 1000);
+    cutoffStr = Utilities.formatDate(cutoff, tz, 'yyyy-MM-dd');
+  }
+  const numCols = Math.max(log.getLastColumn(), 8);
+  const data    = log.getRange(2, 1, log.getLastRow() - 1, numCols).getValues();
+  const rows    = [];
+  data.forEach(r => {
+    const d = r[0] instanceof Date
+      ? Utilities.formatDate(r[0], tz, 'yyyy-MM-dd')
+      : String(r[0]).slice(0, 10);
+    const inRange = weeks === 0 ? (d === today) : (d >= cutoffStr && d <= today);
+    if (!inRange || String(r[1]) !== className) return;
+    rows.push({
+      date:     d,
+      student:  String(r[3]),
+      event:    String(r[4]),
+      time:     String(r[5]),
+      duration: (r[6] !== '' && r[6] != null) ? Number(r[6]) : null,
+      reason:   String(r[7] || '')
+    });
+  });
+  return { rows };
 }
 
 // ── Privata hjälpfunktioner ───────────────────────
@@ -201,39 +238,24 @@ function _visitCounts(className) {
   return counts;
 }
 
-function getStats(className) {
-  const ss  = SpreadsheetApp.getActiveSpreadsheet();
-  const log = ss.getSheetByName(LOG_SHEET);
-  if (!log || log.getLastRow() < 2) return { rows: [] };
-  const tz      = Session.getScriptTimeZone();
-  const today   = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
-  const numCols = Math.max(log.getLastColumn(), 7);
-  const data    = log.getRange(2, 1, log.getLastRow() - 1, numCols).getValues();
-  const rows    = [];
-  data.forEach(r => {
-    const d = r[0] instanceof Date
-      ? Utilities.formatDate(r[0], tz, 'yyyy-MM-dd')
-      : String(r[0]).slice(0, 10);
-    if (d !== today || String(r[1]) !== className) return;
-    rows.push({
-      student:  String(r[3]),
-      event:    String(r[4]),
-      time:     String(r[5]),
-      duration: (r[6] !== '' && r[6] != null) ? Number(r[6]) : null
-    });
-  });
-  return { rows };
-}
-
-function _appendLog(className, testName, studentName, type, time, tz, durationMin) {
+function _appendLog(className, testName, studentName, type, time, tz, durationMin, reason) {
   const ss  = SpreadsheetApp.getActiveSpreadsheet();
   let   log = ss.getSheetByName(LOG_SHEET);
   if (!log) {
     log = ss.insertSheet(LOG_SHEET);
-    const hdr = log.getRange(1, 1, 1, 7);
-    hdr.setValues([['Datum', 'Klass', 'Prov', 'Elev', 'Händelse', 'Tid', 'Minuter']]);
+    const hdr = log.getRange(1, 1, 1, 8);
+    hdr.setValues([['Datum', 'Klass', 'Prov/Lektion', 'Elev', 'Händelse', 'Tid', 'Minuter', 'Orsak']]);
     hdr.setFontWeight('bold');
   }
   const date = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
-  log.appendRow([date, className, testName || '', studentName, type, time, durationMin != null ? durationMin : '']);
+  log.appendRow([
+    date,
+    className,
+    testName || 'Lektion',
+    studentName,
+    type,
+    time,
+    durationMin != null ? durationMin : '',
+    reason || ''
+  ]);
 }

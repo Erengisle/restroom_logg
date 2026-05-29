@@ -121,7 +121,11 @@
       <label>Ditt namn</label>
       <select id="name"></select>
     </div>
-    <button class="btn-primary" onclick="submitRequest()">Ansök om toalettbesök</button>
+    <div class="form-group">
+      <label>Orsak</label>
+      <div id="reason-opts-elev" style="display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
+    </div>
+    <button class="btn-primary" onclick="submitRequest()">Ansök</button>
     <div id="max-info-setup"></div>
   </div>
 
@@ -178,7 +182,14 @@
   const ALERT_MS = 10 * 60 * 1000;
   const PRESET   = '<?= presetKlass ?>';
 
-  let cls = '', studentName = '', pollTimer = null, outEpoch = 0;
+  const REASONS = [
+    { key: 'Toalettbesök',  icon: '🚻', label: 'Toalettbesök'  },
+    { key: 'Skolsyster',    icon: '🏥', label: 'Skolsyster'    },
+    { key: 'Kurator',       icon: '💬', label: 'Kurator'       },
+    { key: 'Telefonsamtal', icon: '📞', label: 'Telefonsamtal' }
+  ];
+
+  let cls = '', studentName = '', selectedReason = 'Toalettbesök', pollTimer = null, outEpoch = 0;
 
   // ── Init ──────────────────────────────────────
 
@@ -195,6 +206,7 @@
           const match = opts.find(o => o.value === PRESET);
           if (match) { sel.value = PRESET; document.getElementById('cls-group').style.display = 'none'; }
         }
+        renderReasonOpts();
         loadStudents();
         sel.addEventListener('change', loadStudents);
       })
@@ -225,6 +237,29 @@
       .getStudentStatus(c, n);
   }
 
+  function renderReasonOpts() {
+    document.getElementById('reason-opts-elev').innerHTML = REASONS.map(r =>
+      `<button type="button"
+        style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:2px solid ${r.key==='Toalettbesök'?'#1a73e8':'#dadce0'};border-radius:10px;background:${r.key==='Toalettbesök'?'#e8f0fe':'#fff'};cursor:pointer;font-size:14px;font-weight:600;color:${r.key==='Toalettbesök'?'#1a73e8':'#5f6368'}"
+        id="rbtn-${r.key}"
+        onclick="pickReason('${r.key}')">
+        <span style="font-size:20px">${r.icon}</span>${r.label}
+      </button>`
+    ).join('');
+  }
+
+  function pickReason(key) {
+    selectedReason = key;
+    REASONS.forEach(r => {
+      const b = document.getElementById('rbtn-' + r.key);
+      if (!b) return;
+      const sel = r.key === key;
+      b.style.borderColor  = sel ? '#1a73e8' : '#dadce0';
+      b.style.background   = sel ? '#e8f0fe' : '#fff';
+      b.style.color        = sel ? '#1a73e8' : '#5f6368';
+    });
+  }
+
   // ── Submit ────────────────────────────────────
 
   function submitRequest() {
@@ -237,6 +272,7 @@
         if (res.success) {
           show('waiting');
           startPolling();
+
         } else if (res.reason === 'max_reached') {
           show('full');
         } else if (res.reason === 'already_out') {
@@ -245,7 +281,7 @@
           startPolling();
         }
       })
-      .submitRequest(cls, studentName);
+      .submitRequest(cls, studentName, selectedReason);
   }
 
   // ── Polling ───────────────────────────────────
