@@ -485,7 +485,7 @@
           <div class="ac-name">${esc(s.name)}</div>
           <div class="ac-timer" data-epoch="${s.leftEpoch}">${fmtTimer(elapsed)}</div>
           <div class="ac-since">Gick kl. ${esc(s.left)}</div>
-          <button class="ac-return-btn" onclick="handleReturn(${JSON.stringify(s.name)})">
+          <button class="ac-return-btn" data-rname="${esc(s.name)}" onclick="handleReturn(this.getAttribute('data-rname'))">
             ✓ Markera tillbaka
           </button>
         </div>`;
@@ -625,9 +625,9 @@
           <div class="req-reason">${reasonInfo.icon} ${esc(r.reason || 'Toalettbesök')}</div>
           <div class="req-time">Ansökte ${fmtAgo(Date.now() - r.time)}</div>
           <div class="req-btns">
-            <button class="btn-approve" onclick="approveReq(${JSON.stringify(r.name)})"
+            <button class="btn-approve" data-rname="${esc(r.name)}" onclick="approveReq(this.getAttribute('data-rname'))"
               ${atMax ? 'disabled' : ''}>✓ Godkänn</button>
-            <button class="btn-deny" onclick="denyReq(${JSON.stringify(r.name)})">✗ Neka</button>
+            <button class="btn-deny" data-rname="${esc(r.name)}" onclick="denyReq(this.getAttribute('data-rname'))">✗ Neka</button>
           </div>
           ${atMax ? '<div class="max-warning">⚠️ Platser fulla</div>' : ''}
         </div>`;
