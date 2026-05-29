@@ -156,6 +156,29 @@
 
     .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(70px); background: #323232; color: #fff; padding: 10px 22px; border-radius: 10px; font-size: 14px; font-weight: 500; opacity: 0; transition: transform .28s, opacity .28s; z-index: 300; pointer-events: none; white-space: nowrap; }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* ── Statistics overlay ── */
+    #stats-overlay { display: none; position: fixed; inset: 0; background: #f8f9fa; z-index: 400; overflow-y: auto; }
+    .st-header { background: #fff; border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 1; }
+    .st-header h2 { font-size: 19px; font-weight: 700; }
+    .btn-back { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; font-size: 14px; cursor: pointer; color: var(--muted); transition: background .15s; }
+    .btn-back:hover { background: var(--grey); }
+    .btn-reload { margin-left: auto; background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; font-size: 13px; cursor: pointer; color: var(--muted); }
+    .st-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 20px 24px 8px; }
+    .st-card { background: #fff; border-radius: 16px; padding: 18px 12px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    .st-val { font-size: 30px; font-weight: 700; color: var(--blue); letter-spacing: -1px; }
+    .st-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+    .st-section { padding: 16px 24px; }
+    .st-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 10px; }
+    .st-table { width: 100%; background: #fff; border-radius: 12px; overflow: hidden; border-collapse: collapse; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    .st-table th { padding: 11px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); border-bottom: 2px solid var(--border); }
+    .st-table td { padding: 11px 14px; font-size: 14px; border-bottom: 1px solid var(--grey); }
+    .st-table tr:last-child td { border-bottom: none; }
+    .row-out  td:first-child::before { content: '🚶 '; }
+    .row-back td:first-child::before { content: '🏃 '; }
+    .row-out  td { color: var(--red); }
+    .row-back td { color: var(--green); }
+    .st-loading { padding: 40px 24px; text-align: center; color: var(--muted); }
   </style>
 </head>
 <body>
@@ -251,6 +274,7 @@
     <div class="toolbar-right">
       <span class="max-label">Max ute:</span>
       <div class="max-btns" id="max-btns"></div>
+      <button class="btn-ghost" onclick="openStats()">Statistik</button>
       <button class="btn-ghost" onclick="confirmClear()">Rensa session</button>
     </div>
   </div>
@@ -278,6 +302,16 @@
       <button class="btn-ok" id="m-ok">Bekräfta</button>
     </div>
   </div>
+</div>
+
+<!-- Statistics overlay -->
+<div id="stats-overlay">
+  <div class="st-header">
+    <button class="btn-back" onclick="closeStats()">← Tillbaka</button>
+    <h2 id="st-title">Statistik</h2>
+    <button class="btn-reload" onclick="loadStats()">↺ Uppdatera</button>
+  </div>
+  <div id="stats-content"><div class="st-loading">Laddar…</div></div>
 </div>
 
 <!-- QR modal -->
@@ -404,11 +438,11 @@
       const elapsed = s.leftEpoch ? Date.now() - s.leftEpoch : 0;
       const c = elapsed >= ALERT_MS ? 'alert' : elapsed >= WARN_MS ? 'warn' : '';
       return `
-        <div class="active-card ${c}" onclick="handleReturn(${JSON.stringify(s.name)})">
+        <div class="active-card ${c}">
           <div class="ac-name">${esc(s.name)}</div>
           <div class="ac-timer" data-epoch="${s.leftEpoch}">${fmtTimer(elapsed)}</div>
           <div class="ac-since">Gick kl. ${esc(s.left)}</div>
-          <button class="ac-return-btn" onclick="event.stopPropagation();handleReturn(${JSON.stringify(s.name)})">
+          <button class="ac-return-btn" onclick="handleReturn(${JSON.stringify(s.name)})">
             ✓ Markera tillbaka
           </button>
         </div>`;
@@ -617,6 +651,93 @@
   }
 
   // ── Helpers ────────────────────────────────────
+
+  // ── Statistics ─────────────────────────────────
+
+  function openStats() {
+    document.getElementById('st-title').textContent = `Statistik – ${cls}`;
+    document.getElementById('stats-overlay').style.display = 'block';
+    loadStats();
+  }
+
+  function closeStats() {
+    document.getElementById('stats-overlay').style.display = 'none';
+  }
+
+  function loadStats() {
+    document.getElementById('stats-content').innerHTML = '<div class="st-loading">Laddar…</div>';
+    google.script.run
+      .withSuccessHandler(renderStatsData)
+      .withFailureHandler(e => { document.getElementById('stats-content').innerHTML = '<div class="st-loading">Fel: ' + esc(e.message) + '</div>'; })
+      .getStats(cls);
+  }
+
+  function renderStatsData(data) {
+    const { rows } = data;
+    if (!rows.length) {
+      document.getElementById('stats-content').innerHTML = '<div class="st-loading">Inga händelser loggade ännu.</div>';
+      return;
+    }
+    const byStudent = {};
+    rows.forEach(r => {
+      if (!byStudent[r.student]) byStudent[r.student] = { visits: 0, totalMin: 0, durations: [] };
+      if (r.event === 'Gick') byStudent[r.student].visits++;
+      if (r.event === 'Tillbaka' && r.duration !== null) {
+        byStudent[r.student].totalMin += r.duration;
+        byStudent[r.student].durations.push(r.duration);
+      }
+    });
+    const completed = rows.filter(r => r.event === 'Tillbaka' && r.duration !== null).map(r => r.duration);
+    const totalVisits = rows.filter(r => r.event === 'Gick').length;
+    const avgDur  = completed.length ? completed.reduce((a, b) => a + b, 0) / completed.length : 0;
+    const maxDur  = completed.length ? Math.max(...completed) : 0;
+
+    const studentRows = Object.entries(byStudent)
+      .filter(([, s]) => s.visits > 0)
+      .sort((a, b) => b[1].totalMin - a[1].totalMin)
+      .map(([name, s]) => `
+        <tr>
+          <td>${esc(name)}</td>
+          <td style="text-align:center">${s.visits}</td>
+          <td>${s.durations.length ? fmtMin(s.totalMin) : '–'}</td>
+          <td>${s.durations.length ? fmtMin(s.totalMin / s.durations.length) : '–'}</td>
+        </tr>`).join('');
+
+    const logRows = rows.map(r => `
+      <tr class="${r.event === 'Gick' ? 'row-out' : 'row-back'}">
+        <td>${esc(r.time)}</td>
+        <td>${esc(r.student)}</td>
+        <td>${r.event}</td>
+        <td>${r.duration !== null ? fmtMin(r.duration) : '–'}</td>
+      </tr>`).join('');
+
+    document.getElementById('stats-content').innerHTML = `
+      <div class="st-summary">
+        <div class="st-card"><div class="st-val">${totalVisits}</div><div class="st-lbl">Besök totalt</div></div>
+        <div class="st-card"><div class="st-val">${completed.length ? fmtMin(avgDur) : '–'}</div><div class="st-lbl">Genomsnittstid</div></div>
+        <div class="st-card"><div class="st-val">${completed.length ? fmtMin(maxDur) : '–'}</div><div class="st-lbl">Längst besök</div></div>
+      </div>
+      <div class="st-section">
+        <div class="st-section-title">Per elev</div>
+        <table class="st-table">
+          <thead><tr><th>Elev</th><th>Besök</th><th>Total tid</th><th>Snitt</th></tr></thead>
+          <tbody>${studentRows}</tbody>
+        </table>
+      </div>
+      <div class="st-section">
+        <div class="st-section-title">Händelselogg</div>
+        <table class="st-table">
+          <thead><tr><th>Tid</th><th>Elev</th><th>Händelse</th><th>Längd</th></tr></thead>
+          <tbody>${logRows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  function fmtMin(min) {
+    const m = Math.floor(min);
+    const s = Math.round((min - m) * 60);
+    return `${m}:${String(s).padStart(2, '0')} min`;
+  }
 
   function fmtTimer(ms) {
     const s = Math.max(0, Math.floor(ms / 1000));

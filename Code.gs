@@ -72,10 +72,13 @@ function logReturn(className, studentName, testName) {
   const time  = Utilities.formatDate(now, tz, 'HH:mm');
   const row   = _findRow(sheet, studentName);
   if (row < 0) return { success: false };
+  const epochVal    = sheet.getRange(row, COL_EPOCH).getValue();
+  const durationMs  = epochVal ? (now.getTime() - Number(epochVal)) : 0;
+  const durationMin = durationMs > 0 ? Math.round(durationMs / 6000) / 10 : null;
   sheet.getRange(row, COL_RET).setValue(time);
   sheet.getRange(row, COL_EPOCH).setValue('');
-  _appendLog(className, testName, studentName, 'Tillbaka', time, tz);
-  return { success: true, time };
+  _appendLog(className, testName, studentName, 'Tillbaka', time, tz, durationMin);
+  return { success: true, time, durationMin };
 }
 
 function resetStudent(className, studentName) {
@@ -198,15 +201,39 @@ function _visitCounts(className) {
   return counts;
 }
 
-function _appendLog(className, testName, studentName, type, time, tz) {
+function getStats(className) {
+  const ss  = SpreadsheetApp.getActiveSpreadsheet();
+  const log = ss.getSheetByName(LOG_SHEET);
+  if (!log || log.getLastRow() < 2) return { rows: [] };
+  const tz      = Session.getScriptTimeZone();
+  const today   = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  const numCols = Math.max(log.getLastColumn(), 7);
+  const data    = log.getRange(2, 1, log.getLastRow() - 1, numCols).getValues();
+  const rows    = [];
+  data.forEach(r => {
+    const d = r[0] instanceof Date
+      ? Utilities.formatDate(r[0], tz, 'yyyy-MM-dd')
+      : String(r[0]).slice(0, 10);
+    if (d !== today || String(r[1]) !== className) return;
+    rows.push({
+      student:  String(r[3]),
+      event:    String(r[4]),
+      time:     String(r[5]),
+      duration: (r[6] !== '' && r[6] != null) ? Number(r[6]) : null
+    });
+  });
+  return { rows };
+}
+
+function _appendLog(className, testName, studentName, type, time, tz, durationMin) {
   const ss  = SpreadsheetApp.getActiveSpreadsheet();
   let   log = ss.getSheetByName(LOG_SHEET);
   if (!log) {
     log = ss.insertSheet(LOG_SHEET);
-    const hdr = log.getRange(1, 1, 1, 6);
-    hdr.setValues([['Datum', 'Klass', 'Prov', 'Elev', 'Händelse', 'Tid']]);
+    const hdr = log.getRange(1, 1, 1, 7);
+    hdr.setValues([['Datum', 'Klass', 'Prov', 'Elev', 'Händelse', 'Tid', 'Minuter']]);
     hdr.setFontWeight('bold');
   }
   const date = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
-  log.appendRow([date, className, testName || '', studentName, type, time]);
+  log.appendRow([date, className, testName || '', studentName, type, time, durationMin != null ? durationMin : '']);
 }
