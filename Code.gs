@@ -9,6 +9,27 @@ const DEFAULT_MAX = 2;
 
 function doGet(e) {
   const view = e && e.parameter && e.parameter.view;
+
+  if (view === 'manifest') {
+    let startUrl = '';
+    try { startUrl = ScriptApp.getService().getUrl(); } catch(_) {}
+    const manifest = {
+      name: 'Toalettbesök',
+      short_name: 'Toalettbesök',
+      start_url: startUrl,
+      display: 'standalone',
+      background_color: '#f8f9fa',
+      theme_color: '#1a73e8',
+      icons: [{
+        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231a73e8'/%3E%3Ctext y='.9em' font-size='80' x='10'%3E%F0%9F%9A%BB%3C/text%3E%3C/svg%3E",
+        sizes: 'any',
+        type: 'image/svg+xml'
+      }]
+    };
+    return ContentService.createTextOutput(JSON.stringify(manifest))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
   if (view === 'elev') {
     const tmpl = HtmlService.createTemplateFromFile('Elev');
     tmpl.presetKlass = (e.parameter.klass) || '';
